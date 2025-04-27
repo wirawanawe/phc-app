@@ -1,0 +1,116 @@
+{
+  "common": {
+    "menu": {
+      "home": "Beranda",
+      "appointments": "Janji Temu",
+      "doctors": "Cari Dokter",
+      "records": "Catatan Kesehatan",
+      "wellness": "Kesehatan",
+      "login": "Masuk / Daftar"
+    },
+    "cta": {
+      "bookAppointment": "Buat Janji Temu",
+      "findDoctor": "Cari Dokter",
+      "viewAll": "Lihat Semua"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Kesehatan Anda, Prioritas Kami",
+      "description": "Akses layanan kesehatan berkualitas, buat janji dengan spesialis, dan kelola catatan kesehatan Anda di satu tempat."
+    },
+    "features": {
+      "records": {
+        "title": "Catatan Kesehatan",
+        "description": "Akses catatan kesehatan Anda kapan saja, di mana saja. Pantau riwayat kesehatan Anda secara aman."
+      },
+      "doctors": {
+        "title": "Dokter Ahli",
+        "description": "Terhubung dengan spesialis berpengalaman dari berbagai bidang medis untuk konsultasi berkualitas."
+      },
+      "scheduling": {
+        "title": "Penjadwalan Mudah",
+        "description": "Buat dan kelola janji temu dengan mudah menggunakan sistem penjadwalan yang intuitif."
+      }
+    },
+    "statistics": {
+      "title": "Statistik PHC",
+      "description": "Lihat angka pertumbuhan layanan kesehatan kami",
+      "doctors": "Dokter",
+      "doctors_desc": "Dokter terdaftar",
+      "patients": "Pasien",
+      "patients_desc": "Pasien terdaftar",
+      "appointments": "Janji Temu",
+      "appointments_desc": "Total janji temu",
+      "programs": "Program Kesehatan",
+      "programs_desc": "Program tersedia",
+      "users": "Pengguna",
+      "users_desc": "Total pengguna"
+    },
+    "specialists": {
+      "title": "Temui Spesialis Kami",
+      "description": "Tim dokter berpengalaman kami siap memberikan perawatan medis terbaik.",
+      "availability": "Ketersediaan: "
+    },
+    "appointment": {
+      "title": "Buat Janji Temu Anda",
+      "description": "Jadwalkan janji dengan spesialis kami dengan cepat dan mudah. Sistem pemesanan online kami tersedia 24/7 untuk kenyamanan Anda.",
+      "features": {
+        "easy": {
+          "title": "Proses Pemesanan Mudah",
+          "description": "Langkah-langkah sederhana untuk memesan janji temu online tanpa kesulitan."
+        },
+        "time": {
+          "title": "Hemat Waktu",
+          "description": "Tidak perlu menunggu dalam antrian telepon. Buat janji dalam hitungan menit."
+        },
+        "manage": {
+          "title": "Kelola Janji Temu Anda",
+          "description": "Lihat, jadwal ulang, atau batalkan janji temu Anda secara online dengan mudah."
+        }
+      }
+    },
+    "testimonials": {
+      "title": "Apa Kata Pasien Kami",
+      "description": "Jangan hanya percaya kata-kata kami. Ini yang dikatakan pasien kami tentang pengalaman mereka."
+    }
+  },
+  "login": {
+    "signin": "Masuk ke akun Anda",
+    "create": "Buat akun baru",
+    "credentials": "Masukkan kredensial Anda untuk mengakses dasbor kesehatan Anda",
+    "join": "Bergabunglah dengan platform kesehatan kami untuk mengelola kesehatan Anda dengan lebih efisien",
+    "email": "Email",
+    "password": "Kata Sandi",
+    "confirmPassword": "Konfirmasi Kata Sandi",
+    "remember": "Ingat saya",
+    "forgot": "Lupa kata sandi?",
+    "submit": "Masuk",
+    "register": "Daftar",
+    "account": "Sudah punya akun?",
+    "noAccount": "Belum punya akun?",
+    "or": "atau"
+  },
+  "appointments": {
+    "title": "Buat Janji Temu Anda",
+    "description": "Jadwalkan konsultasi dengan spesialis kesehatan kami dengan cepat dan mudah."
+  },
+  "records": {
+    "title": "Catatan Kesehatan Anda",
+    "description": "Kelola dan lihat riwayat medis lengkap Anda di satu tempat yang aman."
+  },
+  "doctors": {
+    "title": "Temukan Dokter",
+    "description": "Temukan dan konsultasikan dengan dokter terbaik yang sesuai dengan kebutuhan kesehatan Anda."
+  },
+  "footer": {
+    "about": "Menyediakan solusi kesehatan yang dapat diakses dan dipersonalisasi untuk semua orang.",
+    "quickLinks": "Tautan Cepat",
+    "links": {
+      "home": "Beranda",
+      "about": "Tentang Kami",
+      "services": "Layanan",
+      "contact": "Kontak"
+    }
+  }
+}

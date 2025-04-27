@@ -1,0 +1,116 @@
+{
+  "common": {
+    "menu": {
+      "home": "Home",
+      "appointments": "Appointments",
+      "doctors": "Find Doctors",
+      "records": "Health Records",
+      "wellness": "Wellness",
+      "login": "Login / Register"
+    },
+    "cta": {
+      "bookAppointment": "Book an Appointment",
+      "findDoctor": "Find a Doctor",
+      "viewAll": "View All"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Your Health, Our Priority",
+      "description": "Access quality healthcare services, book appointments with specialists, and manage your health records all in one place."
+    },
+    "features": {
+      "records": {
+        "title": "Health Records",
+        "description": "Access your health records anytime, anywhere. Keep track of your medical history securely."
+      },
+      "doctors": {
+        "title": "Expert Doctors",
+        "description": "Connect with experienced specialists from various medical fields for quality consultations."
+      },
+      "scheduling": {
+        "title": "Easy Scheduling",
+        "description": "Book and manage appointments effortlessly with our intuitive scheduling system."
+      }
+    },
+    "statistics": {
+      "title": "PHC Statistics",
+      "description": "See the growth numbers of our healthcare services",
+      "doctors": "Doctors",
+      "doctors_desc": "Registered doctors",
+      "patients": "Patients",
+      "patients_desc": "Registered patients",
+      "appointments": "Appointments",
+      "appointments_desc": "Total appointments",
+      "programs": "Health Programs",
+      "programs_desc": "Available programs",
+      "users": "Users",
+      "users_desc": "Total users"
+    },
+    "specialists": {
+      "title": "Meet Our Specialists",
+      "description": "Our team of experienced doctors is ready to provide you with the best medical care.",
+      "availability": "Availability: "
+    },
+    "appointment": {
+      "title": "Book Your Appointment",
+      "description": "Schedule an appointment with our specialists quickly and easily. Our online booking system is available 24/7 for your convenience.",
+      "features": {
+        "easy": {
+          "title": "Easy Booking Process",
+          "description": "Simple steps to book your appointment online without any hassle."
+        },
+        "time": {
+          "title": "Save Time",
+          "description": "No waiting on hold for phone appointments. Book in minutes."
+        },
+        "manage": {
+          "title": "Manage Your Appointments",
+          "description": "Easily view, reschedule, or cancel your appointments online."
+        }
+      }
+    },
+    "testimonials": {
+      "title": "What Our Patients Say",
+      "description": "Don't just take our word for it. Here's what our patients have to say about their experiences."
+    }
+  },
+  "login": {
+    "signin": "Sign in to your account",
+    "create": "Create a new account",
+    "credentials": "Enter your credentials to access your healthcare dashboard",
+    "join": "Join our healthcare platform to manage your health more efficiently",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "remember": "Remember me",
+    "forgot": "Forgot password?",
+    "submit": "Sign In",
+    "register": "Register",
+    "account": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "or": "or"
+  },
+  "appointments": {
+    "title": "Book Your Appointment",
+    "description": "Schedule a consultation with our healthcare specialists quickly and easily."
+  },
+  "records": {
+    "title": "Your Health Records",
+    "description": "Manage and view your complete medical history in one secure place."
+  },
+  "doctors": {
+    "title": "Find Doctors",
+    "description": "Find and consult with the best doctors tailored to your healthcare needs."
+  },
+  "footer": {
+    "about": "Providing accessible and personalized healthcare solutions for everyone.",
+    "quickLinks": "Quick Links",
+    "links": {
+      "home": "Home",
+      "about": "About Us",
+      "services": "Services",
+      "contact": "Contact"
+    }
+  }
+}

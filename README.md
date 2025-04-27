@@ -34,3 +34,15 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Database Migrations
+
+### Adding schedule column to doctors table
+
+If you encounter the error `Unknown column 'schedule' in 'field list'` when accessing the doctors API, you need to run the migration script to add the missing column:
+
+```bash
+node scripts/add-schedule-to-doctors.js
+```
+
+This will add the `schedule` column to the doctors table in your database.

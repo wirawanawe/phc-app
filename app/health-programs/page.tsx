@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Navbar from "@/app/components/Navbar";
 import Footer from "@/app/components/Footer";
@@ -38,38 +38,73 @@ export default function HealthProgramsPage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("Semua");
   const [enrolledPrograms, setEnrolledPrograms] = useState<string[]>([]);
+  const [programEnrollmentCounts, setProgramEnrollmentCounts] = useState<
+    Record<string, number>
+  >({});
   const { user } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Load user's enrolled programs when component mounts
-    if (user) {
-      const storedPrograms = JSON.parse(
-        localStorage.getItem("enrolled_programs") || "[]"
-      );
-      // Extract just the IDs of active programs
-      const enrolledProgramIds = storedPrograms
-        .filter((p: any) => p.status === "active" || !p.status)
-        .map((p: any) => p.id);
-      setEnrolledPrograms(enrolledProgramIds);
+  // Load user's enrolled programs from both localStorage (for UI consistency) and server (for accuracy)
+  const loadEnrolledPrograms = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      // Fetch from server to get accurate data
+      const response = await fetch("/api/participants/my-programs", {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Extract IDs of active programs from server data
+        const serverEnrolledProgramIds = data
+          .filter((p: any) => p.status === "active")
+          .map((p: any) => p.id);
+
+        // Update localStorage with server data
+        const enrolledPrograms = data.map((p: any) => ({
+          id: p.id,
+          name: p.name,
+          joinedDate: new Date(p.enrollmentDate).toISOString().split("T")[0],
+          status: p.status,
+          progress: p.progress,
+          completedTasks: p.completedTasks,
+          totalTasks: p.totalTasks,
+        }));
+
+        localStorage.setItem(
+          "enrolled_programs",
+          JSON.stringify(enrolledPrograms)
+        );
+        setEnrolledPrograms(serverEnrolledProgramIds);
+      }
+    } catch (err) {
+      console.error("Error fetching enrolled programs from server:", err);
     }
   }, [user]);
 
-  // Function to retry a failed request with backoff
-  const fetchWithRetry = async (url: string, retries = 3, backoff = 300) => {
+  // Fetch enrollment counts for each program
+  const fetchProgramEnrollmentCounts = useCallback(async () => {
     try {
-      const response = await fetch(url);
-      return response;
+      const response = await fetch("/api/health-programs/enrollment-counts");
+      if (response.ok) {
+        const data = await response.json();
+        const countsMap: Record<string, number> = {};
+
+        data.forEach((item: { programId: string; count: number }) => {
+          countsMap[item.programId] = item.count;
+        });
+
+        setProgramEnrollmentCounts(countsMap);
+      }
     } catch (err) {
-      if (retries <= 1) throw err;
-
-      // Wait for backoff duration
-      await new Promise((resolve) => setTimeout(resolve, backoff));
-
-      // Retry with one less retry and exponential backoff
-      return fetchWithRetry(url, retries - 1, backoff * 2);
+      console.error("Error fetching program enrollment counts:", err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadEnrolledPrograms();
+  }, [loadEnrolledPrograms]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -120,6 +155,9 @@ export default function HealthProgramsPage() {
 
         setPrograms(processedData);
         setError(null);
+
+        // Also fetch enrollment counts for all programs
+        await fetchProgramEnrollmentCounts();
       } catch (err) {
         const errorMessage =
           err instanceof Error
@@ -134,7 +172,23 @@ export default function HealthProgramsPage() {
     };
 
     fetchData();
-  }, []);
+  }, [fetchProgramEnrollmentCounts]);
+
+  // Function to retry a failed request with backoff
+  const fetchWithRetry = async (url: string, retries = 3, backoff = 300) => {
+    try {
+      const response = await fetch(url);
+      return response;
+    } catch (err) {
+      if (retries <= 1) throw err;
+
+      // Wait for backoff duration
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+
+      // Retry with one less retry and exponential backoff
+      return fetchWithRetry(url, retries - 1, backoff * 2);
+    }
+  };
 
   // Calculate program duration in days
   const calculateDuration = (startDate: string, endDate: string | null) => {
@@ -153,6 +207,14 @@ export default function HealthProgramsPage() {
     return enrolledPrograms.includes(programId);
   };
 
+  // Check if program has reached its maximum participants
+  const isProgramFull = (program: HealthProgram) => {
+    if (!program.maxParticipants) return false; // Unlimited participants
+
+    const enrollmentCount = programEnrollmentCounts[program.id] || 0;
+    return enrollmentCount >= program.maxParticipants;
+  };
+
   // Handle enrolling in a program
   const handleEnroll = async (program: HealthProgram) => {
     if (!user) return;
@@ -164,6 +226,14 @@ export default function HealthProgramsPage() {
         "Hanya akun participant yang dapat mengikuti program kesehatan. Silakan daftar sebagai participant terlebih dahulu."
       );
       router.push("/register-participant");
+      return;
+    }
+
+    // Check if program is full
+    if (isProgramFull(program)) {
+      alert(
+        "Program ini telah mencapai batas jumlah peserta. Silakan pilih program lain."
+      );
       return;
     }
 
@@ -188,6 +258,12 @@ export default function HealthProgramsPage() {
       // Update state with new enrolled program
       setEnrolledPrograms((prev) => [...prev, program.id]);
 
+      // Update enrollment count for this program
+      setProgramEnrollmentCounts((prev) => ({
+        ...prev,
+        [program.id]: (prev[program.id] || 0) + 1,
+      }));
+
       // Also update localStorage to maintain compatibility with existing code
       const enrolledPrograms = JSON.parse(
         localStorage.getItem("enrolled_programs") || "[]"
@@ -210,8 +286,8 @@ export default function HealthProgramsPage() {
         );
       }
 
-      // Navigate to the health program detail page
-      router.push(`/health-programs/${program.id}`);
+      // Navigate to the my-programs page
+      router.push(`/my-programs`);
     } catch (error) {
       console.error("Error enrolling in program:", error);
       alert("Gagal mendaftar program. Silakan coba lagi nanti.");
@@ -220,8 +296,8 @@ export default function HealthProgramsPage() {
 
   // Get unique categories from programs
   const programCategories = programs
-    .map((p) => p.category?.name)
-    .filter((name): name is string => name !== undefined);
+    .filter((program) => program.category?.name)
+    .map((program) => program.category!.name);
 
   const uniqueCategories = Array.from(new Set(programCategories));
 
@@ -409,7 +485,10 @@ export default function HealthProgramsPage() {
       </section>
 
       {/* Programs Section */}
-      <section className="py-12 bg-white dark:bg-gray-800">
+      <section
+        className="py-12 bg-white dark:bg-gray-800"
+        id="programs-section"
+      >
         <div className="container mx-auto px-4">
           <div className="mb-8 text-center">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
@@ -423,8 +502,11 @@ export default function HealthProgramsPage() {
           </div>
 
           {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-300">
+                Memuat program kesehatan...
+              </p>
             </div>
           ) : (
             <div className="mb-12">
@@ -471,7 +553,9 @@ export default function HealthProgramsPage() {
                           </div>
                           <span className="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 text-xs px-2 py-1 rounded">
                             {program.maxParticipants
-                              ? `Max ${program.maxParticipants} peserta`
+                              ? `${programEnrollmentCounts[program.id] || 0}/${
+                                  program.maxParticipants
+                                } peserta`
                               : "Tidak dibatasi"}
                           </span>
                         </div>
@@ -500,29 +584,27 @@ export default function HealthProgramsPage() {
                               : "Dibatalkan"}
                           </span>
 
-                          {user ? (
-                            isEnrolled(program.id) ? (
-                              <Link
-                                href={`/health-programs/${program.id}`}
-                                className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium text-sm transition-colors"
-                              >
-                                Lanjutkan Program
-                              </Link>
-                            ) : (
-                              <button
-                                onClick={() => handleEnroll(program)}
-                                className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md font-medium text-sm transition-colors"
-                              >
-                                Ikuti Program
-                              </button>
-                            )
-                          ) : (
+                          {!user ? (
                             <Link
-                              href="/login"
-                              className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-md font-medium text-sm transition-colors"
+                              href={`/register`}
+                              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
                             >
                               Daftar Sekarang
                             </Link>
+                          ) : isEnrolled(program.id) ? (
+                            <Link
+                              href={`/my-programs`}
+                              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                            >
+                              Program Saya
+                            </Link>
+                          ) : (
+                            <button
+                              onClick={() => handleEnroll(program)}
+                              className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                            >
+                              Ikuti Program
+                            </button>
                           )}
                         </div>
                       </div>
@@ -530,10 +612,71 @@ export default function HealthProgramsPage() {
                   ))
                 ) : (
                   <div className="col-span-full">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 text-center">
-                      <p className="text-gray-600 dark:text-gray-400">
-                        Tidak ada program kesehatan yang tersedia saat ini.
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
+                      <img
+                        src="/images/empty-programs.svg"
+                        alt="Tidak ada program"
+                        className="w-48 h-48 mx-auto mb-6"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "https://via.placeholder.com/192x192?text=No+Programs";
+                        }}
+                      />
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                        Belum Ada Program Kesehatan
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                        {selectedCategory !== "Semua"
+                          ? `Saat ini tidak ada program kesehatan yang tersedia dalam kategori "${selectedCategory}". Silakan pilih kategori lain atau kembali nanti.`
+                          : "Saat ini belum ada program kesehatan yang tersedia. Silakan periksa kembali dalam waktu dekat untuk program baru."}
                       </p>
+                      {selectedCategory !== "Semua" && (
+                        <button
+                          onClick={() => setSelectedCategory("Semua")}
+                          className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-md font-medium text-sm transition-colors"
+                        >
+                          Lihat Semua Program
+                        </button>
+                      )}
+
+                      {/* Info box for patients */}
+                      {user &&
+                        user.role === "participant" &&
+                        selectedCategory === "Semua" && (
+                          <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-lg mx-auto">
+                            <div className="flex items-start">
+                              <div className="flex-shrink-0">
+                                <svg
+                                  className="h-5 w-5 text-blue-400"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="ml-3">
+                                <h3 className="text-sm font-medium text-blue-800">
+                                  Informasi untuk pasien
+                                </h3>
+                                <div className="mt-2 text-sm text-blue-700">
+                                  <p className="text-left">
+                                    Program kesehatan baru akan tersedia segera.
+                                    Anda akan mendapatkan notifikasi ketika
+                                    program baru ditambahkan. Untuk sementara,
+                                    Anda dapat berkonsultasi dengan dokter atau
+                                    penyedia layanan kesehatan Anda untuk
+                                    rekomendasi program kesehatan.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                     </div>
                   </div>
                 )}
@@ -551,18 +694,45 @@ export default function HealthProgramsPage() {
           </h2>
           <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
             {user
-              ? "Mulai program kesehatan Anda hari ini dan rasakan perbedaannya dalam kehidupan sehari-hari."
+              ? programs.length > 0
+                ? "Mulai program kesehatan Anda hari ini dan rasakan perbedaannya dalam kehidupan sehari-hari."
+                : "Saat ini belum ada program kesehatan yang tersedia. Kami akan segera menambahkan program baru."
               : "Bergabunglah dengan program kesehatan kami hari ini dan ambil langkah pertama menuju kehidupan yang lebih sehat dan seimbang."}
           </p>
           <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
             {user ? (
               <>
-                <Link
-                  href="/my-programs"
-                  className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
-                >
-                  Program Saya
-                </Link>
+                {enrolledPrograms.length > 0 ? (
+                  <Link
+                    href="/my-programs"
+                    className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
+                  >
+                    Program Saya
+                  </Link>
+                ) : (
+                  <Link
+                    href="/"
+                    className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
+                  >
+                    Kembali ke Beranda
+                  </Link>
+                )}
+                {user.role === "participant" &&
+                  enrolledPrograms.length === 0 &&
+                  programs.length > 0 && (
+                    <Link
+                      href="#programs-section"
+                      className="btn border border-white text-white hover:bg-white/10 px-6 py-3 font-medium rounded-md"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        document
+                          .getElementById("programs-section")
+                          ?.scrollIntoView({ behavior: "smooth" });
+                      }}
+                    >
+                      Jelajahi Program
+                    </Link>
+                  )}
               </>
             ) : (
               <>
@@ -571,6 +741,12 @@ export default function HealthProgramsPage() {
                   className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
                 >
                   Daftar Sekarang
+                </Link>
+                <Link
+                  href="/login"
+                  className="btn border border-white text-white hover:bg-white/10 px-6 py-3 font-medium rounded-md"
+                >
+                  Masuk
                 </Link>
               </>
             )}

@@ -19,6 +19,7 @@ export default function HealthProgramDetailPage() {
   const [progress, setProgress] = useState<number>(0);
   const [completedTasks, setCompletedTasks] = useState<number>(0);
   const [totalTasks, setTotalTasks] = useState<number>(0);
+  const [programStatus, setProgramStatus] = useState<string>("");
 
   useEffect(() => {
     const fetchProgram = async () => {
@@ -44,6 +45,13 @@ export default function HealthProgramDetailPage() {
           setProgress(enrolledProgram.progress || 0);
           setCompletedTasks(enrolledProgram.completedTasks || 0);
           setTotalTasks(enrolledProgram.totalTasks || 0);
+
+          // Set program status based on progress
+          if (enrolledProgram.progress === 100) {
+            setProgramStatus("completed");
+          } else {
+            setProgramStatus(enrolledProgram.status || "active");
+          }
         } else {
           setIsEnrolled(false);
         }
@@ -75,6 +83,11 @@ export default function HealthProgramDetailPage() {
                 setCompletedTasks(completed);
                 setTotalTasks(tasksData.length);
 
+                // Update programStatus if all tasks are completed
+                if (progressPercentage === 100) {
+                  setProgramStatus("completed");
+                }
+
                 // Update localStorage with the latest progress
                 const updatedPrograms = enrolledPrograms.map((p: any) => {
                   if (p.id === programId) {
@@ -83,6 +96,8 @@ export default function HealthProgramDetailPage() {
                       progress: progressPercentage,
                       completedTasks: completed,
                       totalTasks: tasksData.length,
+                      status:
+                        progressPercentage === 100 ? "completed" : p.status,
                     };
                   }
                   return p;
@@ -115,12 +130,42 @@ export default function HealthProgramDetailPage() {
     }
   }, [programId]);
 
+  useEffect(() => {
+    const checkEnrollmentStatus = async () => {
+      if (!user) return;
+
+      try {
+        const response = await fetch(
+          `/api/participants/my-programs/${programId}`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (response.ok) {
+          setIsEnrolled(true);
+        } else if (response.status === 404) {
+          setIsEnrolled(false);
+        }
+      } catch (error) {
+        console.error("Error checking enrollment status:", error);
+        setIsEnrolled(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkEnrollmentStatus();
+  }, [user, programId]);
+
   const handleEnroll = async () => {
-    if (!user) return;
+    if (!user) {
+      router.push("/login");
+      return;
+    }
 
     // Check if user has the 'participant' role
     if (user.role !== "participant") {
-      // For non-participant roles, redirect to a page to register as participant
       alert(
         "Hanya akun participant yang dapat mengikuti program kesehatan. Silakan daftar sebagai participant terlebih dahulu."
       );
@@ -128,48 +173,89 @@ export default function HealthProgramDetailPage() {
       return;
     }
 
+    // Tampilkan loading state atau indikator
+    setLoading(true);
+
     try {
-      // Enroll in program via API
+      console.log("Enrolling user in program:", programId);
+
+      // Enroll in program via API - gunakan pendekatan yang lebih sederhana
       const response = await fetch(`/api/health-programs/${programId}/enroll`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache",
         },
         credentials: "include",
+        cache: "no-store",
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to enroll in program");
+      // Log full response for debugging
+      console.log("Enrollment response status:", response.status);
+
+      // Pastikan response bisa di-parse sebagai JSON
+      let responseData: any = {};
+      try {
+        responseData = await response.json();
+        console.log("Enrollment response data:", responseData);
+      } catch (e) {
+        console.error("Error parsing JSON response:", e);
       }
 
-      // Update UI state after successful enrollment
-      setIsEnrolled(true);
+      if (response.status === 200) {
+        // Sukses - update state dan redirect
+        console.log("Enrollment successful");
+        setIsEnrolled(true);
 
-      // Also update localStorage to maintain compatibility with existing code
-      const enrolledPrograms = JSON.parse(
-        localStorage.getItem("enrolled_programs") || "[]"
-      );
-
-      // Add this program to enrolled programs if not already enrolled
-      if (!enrolledPrograms.some((p: any) => p.id === programId)) {
-        const newEnrolledProgram = {
-          ...program,
-          joinedDate: new Date().toISOString().split("T")[0],
-          progress: 0,
-          completedTasks: 0,
-          totalTasks: 0,
-        };
-
-        enrolledPrograms.push(newEnrolledProgram);
-        localStorage.setItem(
-          "enrolled_programs",
-          JSON.stringify(enrolledPrograms)
+        // Update localStorage with new enrollment
+        const enrolledPrograms = JSON.parse(
+          localStorage.getItem("enrolled_programs") || "[]"
         );
+
+        // Add this program to enrolled programs if not already enrolled
+        if (!enrolledPrograms.some((p: any) => p.id === programId)) {
+          const newEnrolledProgram = {
+            id: programId,
+            name: program.name,
+            joinedDate: new Date().toISOString().split("T")[0],
+            status: "active",
+            progress: 0,
+            completedTasks: 0,
+            totalTasks: 0,
+          };
+
+          enrolledPrograms.push(newEnrolledProgram);
+          localStorage.setItem(
+            "enrolled_programs",
+            JSON.stringify(enrolledPrograms)
+          );
+        }
+
+        // Redirect to my-programs page
+        console.log("Redirecting to my-programs");
+        router.push("/my-programs");
+      } else if (response.status === 404) {
+        // Program tidak ditemukan atau user tidak ditemukan
+        throw new Error(
+          responseData.error || "Program atau profil tidak ditemukan"
+        );
+      } else if (response.status === 401) {
+        // Unauthorized - redirect to login
+        alert("Sesi Anda telah berakhir. Silakan login kembali.");
+        router.push("/login");
+      } else {
+        // Kasus error lainnya
+        throw new Error(responseData.error || "Gagal mendaftar program");
       }
     } catch (error) {
       console.error("Error enrolling in program:", error);
-      alert("Gagal mendaftar program. Silakan coba lagi nanti.");
+      alert(
+        `Gagal mendaftar program: ${
+          error instanceof Error ? error.message : "Silakan coba lagi nanti"
+        }`
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -265,41 +351,32 @@ export default function HealthProgramDetailPage() {
             </div>
             <div className="flex space-x-3">
               {isEnrolled ? (
-                <>
-                  {user && user.role === "admin" ? (
-                    <Link
-                      href={`/admin/health-programs/${programId}/tasks`}
-                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                    >
-                      Kelola Tugas (Admin)
-                    </Link>
-                  ) : null}
-                </>
+                programStatus === "completed" ? (
+                  <button
+                    className="min-w-[120px] px-4 py-2 bg-green-500 text-white rounded-md cursor-not-allowed opacity-80"
+                    disabled
+                  >
+                    Tugas Selesai
+                  </button>
+                ) : (
+                  <Link
+                    href={`/my-programs/${programId}`}
+                    className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                  >
+                    Lanjutkan Program
+                  </Link>
+                )
               ) : (
-                <>
-                  {!user ? (
-                    <Link
-                      href="/login"
-                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                    >
-                      Login untuk Mengikuti Program
-                    </Link>
-                  ) : user.role === "participant" ? (
-                    <button
-                      onClick={handleEnroll}
-                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                    >
-                      Daftar Program
-                    </button>
-                  ) : (
-                    <Link
-                      href="/register-participant"
-                      className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-colors"
-                    >
-                      Daftar sebagai Participant
-                    </Link>
-                  )}
-                </>
+                <button
+                  onClick={handleEnroll}
+                  className={`min-w-[120px] min-h-[40px] px-6 py-3 text-white rounded-md transition-colors cursor-pointer font-medium ${
+                    loading ? "bg-gray-400" : "bg-primary hover:bg-primary-dark"
+                  }`}
+                  type="button"
+                  disabled={loading}
+                >
+                  {loading ? "Memproses..." : "Ikuti Program"}
+                </button>
               )}
             </div>
           </div>
@@ -367,8 +444,13 @@ export default function HealthProgramDetailPage() {
               {/* Progress section - only shown if user is enrolled */}
               {isEnrolled && (
                 <div className="mt-6 border-t pt-6 border-gray-200 dark:border-gray-700">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
                     Progress Program
+                    {programStatus === "completed" && (
+                      <span className="ml-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                        Selesai
+                      </span>
+                    )}
                   </h2>
 
                   {/* Progress bar */}
@@ -383,7 +465,9 @@ export default function HealthProgramDetailPage() {
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
                       <div
-                        className="bg-primary h-2.5 rounded-full transition-all duration-300"
+                        className={`h-2.5 rounded-full transition-all duration-300 ${
+                          progress === 100 ? "bg-green-500" : "bg-primary"
+                        }`}
                         style={{ width: `${progress}%` }}
                       ></div>
                     </div>
@@ -393,7 +477,7 @@ export default function HealthProgramDetailPage() {
                       </span>
                       {progress === 100 && (
                         <span className="text-green-600 dark:text-green-400 font-medium">
-                          Program Selesai!
+                          Semua tugas telah diselesaikan!
                         </span>
                       )}
                     </div>
@@ -410,7 +494,11 @@ export default function HealthProgramDetailPage() {
                       </div>
                     </div>
                     <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg text-center">
-                      <div className="text-2xl font-bold text-primary">
+                      <div
+                        className={`text-2xl font-bold ${
+                          progress === 100 ? "text-green-500" : "text-primary"
+                        }`}
+                      >
                         {completedTasks}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -429,12 +517,21 @@ export default function HealthProgramDetailPage() {
 
                   {/* Link to tasks */}
                   <div className="flex space-x-3 mt-4">
-                    <Link
-                      href={`/health-programs/${programId}/tasks`}
-                      className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
-                    >
-                      Lihat Detail Tugas
-                    </Link>
+                    {programStatus !== "completed" ? (
+                      <Link
+                        href={`/health-programs/${programId}/tasks`}
+                        className="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark transition-colors"
+                      >
+                        Lihat Detail Tugas
+                      </Link>
+                    ) : (
+                      <button
+                        className="px-4 py-2 bg-green-500 text-white rounded-md opacity-80 cursor-not-allowed"
+                        disabled
+                      >
+                        Tugas Selesai
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

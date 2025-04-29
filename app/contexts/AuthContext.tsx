@@ -67,6 +67,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("AUTH: Starting login process");
     setLoading(true);
     try {
+      // Check for empty fields
+      if (!emailOrUsername || !password) {
+        console.error("AUTH: Empty email/username or password");
+        setLoading(false);
+        return false;
+      }
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
@@ -82,12 +89,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         const loggedInUser = data.user;
         console.log("AUTH: Login successful, user data received");
+
+        // Ensure the user has all required fields for the User interface
+        if (!loggedInUser || !loggedInUser.id) {
+          console.error("AUTH: Invalid user data received from server");
+          setLoading(false);
+          return false;
+        }
+
         console.log(
           "AUTH: User data details:",
           JSON.stringify(loggedInUser, null, 2)
         );
 
-        // Ensure the user has all required fields for the User interface
+        // Add token to user object if available in response
+        if (data.token) {
+          loggedInUser.token = data.token;
+          console.log("AUTH: Token received and saved to user object");
+        }
+
         setUser(loggedInUser);
         // Simpan user ke localStorage
         localStorage.setItem("phc_user", JSON.stringify(loggedInUser));
@@ -103,32 +123,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
         return true;
       } else {
-        console.log("AUTH: Login failed with status:", response.status);
-        let errorData = {};
+        // Handle different status codes
+        let errorMessage = "Login gagal";
+
+        if (response.status === 401) {
+          errorMessage = "Email/username atau password salah";
+        } else if (response.status === 403) {
+          errorMessage = "Akun Anda tidak aktif. Silakan hubungi admin.";
+        } else if (response.status === 429) {
+          errorMessage =
+            "Terlalu banyak percobaan login. Silakan coba lagi nanti.";
+        } else if (response.status >= 500) {
+          errorMessage =
+            "Terjadi kesalahan pada server. Silakan coba lagi nanti.";
+        }
+
+        console.log(
+          `AUTH: Login failed with status: ${response.status} - ${errorMessage}`
+        );
 
         try {
           // Check if the response has a content-type header
           const contentType = response.headers.get("content-type");
           if (contentType && contentType.includes("application/json")) {
-            errorData = await response.json();
+            const errorData = await response.json();
+
+            if (errorData && errorData.error) {
+              errorMessage = errorData.error;
+              console.error("AUTH: Server error message:", errorData.error);
+            }
+
+            console.error("AUTH: Login error details:", errorData || {});
           } else {
             // If not JSON, try to get the text
             const text = await response.text();
-            console.log("AUTH: Non-JSON error response:", text);
-            errorData = { error: text || "Unknown error" };
+            if (text) {
+              console.log("AUTH: Non-JSON error response:", text);
+              errorMessage = text;
+            }
           }
         } catch (parseError) {
           console.error("AUTH: Error parsing error response:", parseError);
-          errorData = { error: "Could not parse error response" };
+          // Keep the default error message
         }
 
-        console.error("AUTH: Login error details:", errorData);
+        console.error("AUTH: Login failed:", errorMessage);
+        setLoading(false);
+        return false;
       }
-
-      setLoading(false);
-      return false;
     } catch (error) {
-      console.error("AUTH: Login error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Terjadi kesalahan saat login";
+      console.error("AUTH: Login error:", errorMessage);
+      console.error("AUTH: Full error object:", error);
       setLoading(false);
       return false;
     }

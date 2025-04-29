@@ -194,7 +194,18 @@ export default function LoginPage() {
     setError("");
     setSuccessMessage("");
 
-    // Validate the form
+    // Validate form inputs first
+    if (!email) {
+      setError("Silakan masukkan email atau username Anda");
+      return;
+    }
+
+    if (!password) {
+      setError("Silakan masukkan password Anda");
+      return;
+    }
+
+    // Additional validation if needed
     if (!validateForm()) {
       return;
     }
@@ -204,17 +215,35 @@ export default function LoginPage() {
     if (isLogin) {
       // Login
       try {
+        console.log("Login: Attempting login with:", email);
         const success = await login(email, password);
+
         if (success) {
           // Redirect akan ditangani oleh useEffect di atas
+          console.log(
+            "Login: Login successful, redirect will be handled by useEffect"
+          );
         } else {
+          console.log("Login: Login failed");
           setError("Email/username atau password salah. Silakan coba lagi.");
         }
       } catch (err) {
-        console.error("Login error:", err);
-        setError(
-          "Terjadi kesalahan saat login. Periksa koneksi internet Anda atau coba lagi nanti."
-        );
+        console.error("Login: Error during login process:", err);
+        let errorMessage = "Terjadi kesalahan saat login.";
+
+        if (err instanceof Error) {
+          console.error("Login error details:", err.message);
+          // Provide more specific error messages based on error
+          if (
+            err.message.includes("network") ||
+            err.message.includes("fetch")
+          ) {
+            errorMessage =
+              "Gagal terhubung ke server. Periksa koneksi internet Anda.";
+          }
+        }
+
+        setError(errorMessage);
       }
     } else {
       // Register

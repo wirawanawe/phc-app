@@ -6,16 +6,19 @@ import {
   DoctorModel,
 } from "@/app/models";
 
+type Params = {
+  params: {
+    id: string;
+  };
+};
+
 // GET a specific appointment by ID
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: Params) {
   try {
     // Make sure database is initialized
     await initializeDatabase();
 
-    const { id } = params;
+    const id = params.id;
     const appointment = await AppointmentModel.findByPk(id, {
       include: [
         { model: ParticipantModel, as: "participant" },
@@ -41,15 +44,12 @@ export async function GET(
 }
 
 // PUT update an appointment
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: Params) {
   try {
     // Make sure database is initialized
     await initializeDatabase();
 
-    const { id } = params;
+    const id = params.id;
     const body = await request.json();
 
     // Find the appointment
@@ -90,15 +90,12 @@ export async function PUT(
 }
 
 // DELETE an appointment
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: Params) {
   try {
     // Make sure database is initialized
     await initializeDatabase();
 
-    const { id } = params;
+    const id = params.id;
 
     // Find the appointment
     const appointment = await AppointmentModel.findByPk(id);

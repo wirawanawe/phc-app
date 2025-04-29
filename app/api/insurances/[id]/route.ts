@@ -5,13 +5,14 @@ import { initializeDatabase } from "@/app/models";
 // GET a specific insurance by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Make sure database is initialized
     await initializeDatabase();
 
-    const id = params.id;
+    // Properly await the params
+    const { id } = await params;
     const insurance = await InsuranceModel.findByPk(id);
 
     if (!insurance) {

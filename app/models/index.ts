@@ -8,6 +8,8 @@ import SpesializationModel from "./Spesialization";
 import InsuranceModel from "./Insurance";
 import TaskModel, { setTaskAssociations } from "./Task";
 import ProgramCategoryModel from "./ProgramCategory";
+import WebsiteSettingsModel from "./WebsiteSettings";
+import ArticleModel from "./Article";
 import { runMigrations } from "../config/migrations";
 
 // Define associations between models
@@ -51,6 +53,8 @@ export {
   InsuranceModel,
   TaskModel,
   ProgramCategoryModel,
+  WebsiteSettingsModel,
+  ArticleModel,
 };
 
 // Initialize database and models
@@ -106,6 +110,8 @@ export const initializeDatabase = async () => {
       SpesializationModel,
       InsuranceModel,
       TaskModel,
+      WebsiteSettingsModel,
+      ArticleModel,
     ];
 
     // First create tables if they don't exist
@@ -230,6 +236,37 @@ export const initializeDatabase = async () => {
       console.error("Error creating default program category:", categoryError);
     }
 
+    // Create default website settings if not exists
+    try {
+      const settingsCount = await WebsiteSettingsModel.count();
+      if (settingsCount === 0) {
+        console.log("No website settings found. Creating default settings...");
+        const defaultSettings = await WebsiteSettingsModel.create({
+          logoUrl: "/logo doctorPHC.jpg",
+          heroBackgroundUrl: "/hero-background.jpg",
+          email: "support@phc.com",
+          phone: "+62 21 1234 5678",
+          whatsapp: "+6281234567890",
+          address: "Jl. Kesehatan No. 123, Jakarta, Indonesia",
+          workingHours:
+            "Senin - Jumat: 08.00 - 17.00\nSabtu: 09.00 - 15.00\nMinggu: Tutup",
+          facebook: "",
+          twitter: "",
+          instagram: "",
+          youtube: "",
+        });
+        console.log(
+          "Created default website settings with ID:",
+          defaultSettings.id
+        );
+      }
+    } catch (settingsError) {
+      console.error(
+        "Error checking/creating default website settings:",
+        settingsError
+      );
+    }
+
     // Log the synchronized tables
     for (const model of models) {
       console.log(`Synchronized model: ${model.name}`);
@@ -267,6 +304,8 @@ export default {
   InsuranceModel,
   TaskModel,
   ProgramCategoryModel,
+  WebsiteSettingsModel,
+  ArticleModel,
   initializeDatabase,
   resetDatabase,
 };

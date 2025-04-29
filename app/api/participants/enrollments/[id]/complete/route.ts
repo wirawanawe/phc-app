@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/app/utils/auth";
 import { sequelize } from "@/app/models";
+import { QueryTypes } from "sequelize";
 
 export async function PUT(
   req: NextRequest,
@@ -42,11 +43,11 @@ export async function PUT(
     // Get the participant associated with this user
     const [participant] = await sequelize.query(
       `
-      SELECT id FROM participants WHERE userId = ?
+      SELECT id FROM participants WHERE id = ?
       `,
       {
         replacements: [userId],
-        type: sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
       }
     );
 
@@ -67,7 +68,7 @@ export async function PUT(
       `,
       {
         replacements: [enrollmentId, participantId],
-        type: sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
       }
     );
 
@@ -87,7 +88,7 @@ export async function PUT(
       `,
       {
         replacements: [enrollmentId],
-        type: sequelize.QueryTypes.UPDATE,
+        type: QueryTypes.UPDATE,
       }
     );
 

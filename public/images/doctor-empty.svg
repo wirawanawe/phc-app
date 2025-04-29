@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="248" fill="#F3F4F6" stroke="#E5E7EB" stroke-width="8"/>
+  
+  <!-- Magnifying glass -->
+  <circle cx="220" cy="220" r="70" fill="white" stroke="#3B82F6" stroke-width="12"/>
+  <line x1="270" y1="270" x2="330" y2="330" stroke="#3B82F6" stroke-width="16" stroke-linecap="round"/>
+  
+  <!-- Doctor icon in magnifying glass -->
+  <path d="M220 180C207.297 180 197 190.297 197 203C197 215.703 207.297 226 220 226C232.703 226 243 215.703 243 203C243 190.297 232.703 180 220 180Z" fill="#3B82F6"/>
+  <path d="M220 230C202.327 230 188 244.327 188 262V270H252V262C252 244.327 237.673 230 220 230Z" fill="#3B82F6"/>
+  <rect x="215" y="150" width="10" height="20" rx="5" fill="#3B82F6"/>
+  <rect x="200" y="165" width="10" height="20" rx="5" transform="rotate(-90 200 165)" fill="#3B82F6"/>
+  
+  <!-- Text elements -->
+  <text x="256" y="380" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="#4B5563" text-anchor="middle">No Doctors Found</text>
+  <text x="256" y="410" font-family="Arial, sans-serif" font-size="16" fill="#6B7280" text-anchor="middle">Try searching with different criteria</text>
+</svg> 

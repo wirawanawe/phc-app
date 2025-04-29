@@ -1,24 +1,44 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Appointment } from "@/app/types";
-
-// Import from the main route file where the array is exported
-import { appointments } from "../route";
+import {
+  AppointmentModel,
+  ParticipantModel,
+  DoctorModel,
+  initializeDatabase,
+} from "@/app/models";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const id = params.id;
-  const appointment = appointments.find((a: Appointment) => a.id === id);
+  try {
+    // Make sure database is initialized
+    await initializeDatabase();
 
-  if (!appointment) {
+    const id = params.id;
+
+    // Find appointment in database
+    const appointment = await AppointmentModel.findByPk(id, {
+      include: [
+        { model: ParticipantModel, as: "participant" },
+        { model: DoctorModel, as: "doctor" },
+      ],
+    });
+
+    if (!appointment) {
+      return NextResponse.json(
+        { error: "Appointment not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(appointment);
+  } catch (error) {
+    console.error("Error fetching appointment:", error);
     return NextResponse.json(
-      { error: "Appointment not found" },
-      { status: 404 }
+      { error: "Failed to fetch appointment" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json(appointment);
 }
 
 export async function PUT(
@@ -26,14 +46,15 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Make sure database is initialized
+    await initializeDatabase();
+
     const id = params.id;
     const body = await request.json();
 
     // Find the appointment
-    const appointmentIndex = appointments.findIndex(
-      (a: Appointment) => a.id === id
-    );
-    if (appointmentIndex === -1) {
+    const appointment = await AppointmentModel.findByPk(id);
+    if (!appointment) {
       return NextResponse.json(
         { error: "Appointment not found" },
         { status: 404 }
@@ -48,19 +69,23 @@ export async function PUT(
       );
     }
 
-    // Update the appointment (keeping the id and createdAt the same)
-    const updatedAppointment: Appointment = {
-      ...appointments[appointmentIndex],
+    // Update the appointment
+    await appointment.update({
       participantId: body.participantId,
       doctorId: body.doctorId,
       date: body.date,
       time: body.time,
-      status: body.status || appointments[appointmentIndex].status,
+      status: body.status || appointment.status,
       notes: body.notes,
-      // Don't update id or createdAt
-    };
+    });
 
-    appointments[appointmentIndex] = updatedAppointment;
+    // Fetch the updated appointment with related data
+    const updatedAppointment = await AppointmentModel.findByPk(id, {
+      include: [
+        { model: ParticipantModel, as: "participant" },
+        { model: DoctorModel, as: "doctor" },
+      ],
+    });
 
     return NextResponse.json(updatedAppointment);
   } catch (error) {
@@ -77,13 +102,14 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Make sure database is initialized
+    await initializeDatabase();
+
     const id = params.id;
 
     // Check if appointment exists
-    const appointmentIndex = appointments.findIndex(
-      (a: Appointment) => a.id === id
-    );
-    if (appointmentIndex === -1) {
+    const appointment = await AppointmentModel.findByPk(id);
+    if (!appointment) {
       return NextResponse.json(
         { error: "Appointment not found" },
         { status: 404 }
@@ -91,7 +117,7 @@ export async function DELETE(
     }
 
     // Remove the appointment
-    appointments.splice(appointmentIndex, 1);
+    await appointment.destroy();
 
     return NextResponse.json({ message: "Appointment deleted successfully" });
   } catch (error) {

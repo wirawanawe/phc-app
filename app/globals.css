@@ -59,3 +59,86 @@ body {
 .container {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
 }
+
+/* Mobile padding for bottom navigation */
+@media (max-width: 768px) {
+  .main-content {
+    padding-bottom: 4rem; /* Add padding to account for bottom navbar */
+  }
+
+  /* Fix for any fixed position elements at the bottom */
+  .fixed.bottom-0:not(.md\:hidden) {
+    bottom: 4rem;
+  }
+}
+
+/* Article content styling */
+.article-content {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.article-content p {
+  margin-bottom: 1rem;
+}
+
+.article-content h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-content h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.article-content ul,
+.article-content ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.article-content li {
+  margin-bottom: 0.5rem;
+}
+
+.article-content img {
+  border-radius: 0.375rem;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5rem 0;
+}
+
+.article-content a {
+  color: #e32345;
+  text-decoration: underline;
+}
+
+.article-content blockquote {
+  border-left: 4px solid #e32345;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  font-style: italic;
+  color: #666;
+}
+
+/* Responsive adjustments for mobile */
+@media (max-width: 768px) {
+  .article-content {
+    font-size: 15px;
+  }
+
+  .article-content h2 {
+    font-size: 1.3rem;
+  }
+
+  .article-content h3 {
+    font-size: 1.1rem;
+  }
+}

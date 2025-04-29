@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/app/utils/auth";
 import { sequelize } from "@/app/models";
+import { QueryTypes } from "sequelize";
 
 export async function GET(req: NextRequest) {
   console.log("API: Received request to fetch enrolled programs");
@@ -46,11 +47,11 @@ export async function GET(req: NextRequest) {
       // Get the participant associated with this user
       const [participant] = await sequelize.query(
         `
-        SELECT id FROM participants WHERE userId = ?
+        SELECT id FROM participants WHERE id = ?
         `,
         {
           replacements: [userId],
-          type: sequelize.QueryTypes.SELECT,
+          type: QueryTypes.SELECT,
         }
       );
 
@@ -90,7 +91,7 @@ export async function GET(req: NextRequest) {
         `,
         {
           replacements: [participantId],
-          type: sequelize.QueryTypes.SELECT,
+          type: QueryTypes.SELECT,
         }
       );
 
@@ -103,24 +104,71 @@ export async function GET(req: NextRequest) {
       const programsWithProgress = await Promise.all(
         (enrollments as any[]).map(async (enrollment) => {
           // Fetch tasks for this program
-          const tasks = await sequelize.query(
-            `
-            SELECT 
-              t.id, 
-              t.title, 
-              t.description, 
-              t.priority,
-              t.timePerformed,
-              COALESCE(pt.status, t.status) AS status
-            FROM tasks t
-            LEFT JOIN participant_tasks pt ON t.id = pt.taskId AND pt.participantId = ?
-            WHERE t.healthProgramId = ?
-            `,
-            {
-              replacements: [participantId, enrollment.programId],
-              type: sequelize.QueryTypes.SELECT,
+          let tasks: any[] = [];
+          try {
+            // First check if participant_tasks table exists
+            const [ptExists] = await sequelize.query(
+              `
+              SELECT COUNT(*) as count 
+              FROM information_schema.tables 
+              WHERE table_schema = DATABASE() 
+              AND table_name = 'participant_tasks'
+              `,
+              {
+                type: QueryTypes.SELECT,
+              }
+            );
+
+            const participantTasksExist = (ptExists as any).count > 0;
+
+            // Use appropriate query based on whether participant_tasks table exists
+            if (participantTasksExist) {
+              // If table exists, use the original query with LEFT JOIN
+              const taskResults = await sequelize.query(
+                `
+                SELECT 
+                  t.id, 
+                  t.title, 
+                  t.description, 
+                  t.priority,
+                  t.timePerformed,
+                  COALESCE(pt.status, t.status) AS status
+                FROM tasks t
+                LEFT JOIN participant_tasks pt ON t.id = pt.taskId AND pt.participantId = ?
+                WHERE t.healthProgramId = ?
+                `,
+                {
+                  replacements: [participantId, enrollment.programId],
+                  type: QueryTypes.SELECT,
+                }
+              );
+              tasks = taskResults;
+            } else {
+              // If table doesn't exist, use a simpler query without LEFT JOIN
+              const taskResults = await sequelize.query(
+                `
+                SELECT 
+                  t.id, 
+                  t.title, 
+                  t.description, 
+                  t.priority,
+                  t.timePerformed,
+                  t.status
+                FROM tasks t
+                WHERE t.healthProgramId = ?
+                `,
+                {
+                  replacements: [enrollment.programId],
+                  type: QueryTypes.SELECT,
+                }
+              );
+              tasks = taskResults;
             }
-          );
+          } catch (taskError) {
+            console.error("API: Error fetching tasks:", taskError);
+            // If there's an error, just set tasks to empty array
+            tasks = [];
+          }
 
           // Calculate progress
           const totalTasks = tasks.length;

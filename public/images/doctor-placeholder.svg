@@ -1,0 +1,16 @@
+<svg width="600" height="600" viewBox="0 0 600 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="600" height="600" fill="#F3F4F6"/>
+  
+  <!-- Doctor silhouette -->
+  <path d="M300 150C264.101 150 235 179.101 235 215C235 250.899 264.101 280 300 280C335.899 280 365 250.899 365 215C365 179.101 335.899 150 300 150Z" fill="#D1D5DB"/>
+  <path d="M300 305C223.72 305 162 366.72 162 443V480H438V443C438 366.72 376.28 305 300 305Z" fill="#D1D5DB"/>
+  
+  <!-- Stethoscope -->
+  <path d="M250 250C250 250 270 280 300 290C330 280 350 250 350 250" stroke="#6B7280" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="230" cy="240" r="10" fill="#6B7280"/>
+  <path d="M230 240C230 240 220 265 230 290C240 315 250 325 250 325" stroke="#6B7280" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Text -->
+  <text x="300" y="530" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#4B5563" text-anchor="middle">Doctor Image</text>
+</svg> 

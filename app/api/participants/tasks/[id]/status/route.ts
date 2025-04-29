@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "@/app/utils/auth";
 import { sequelize } from "@/app/models";
+import { QueryTypes } from "sequelize";
+import { v4 as uuidv4 } from "uuid";
 
 interface RequestBody {
   status: "active" | "completed";
@@ -57,11 +59,11 @@ export async function PUT(
     // Get the participant associated with this user
     const [participant] = await sequelize.query(
       `
-      SELECT id FROM participants WHERE userId = ?
+      SELECT id FROM participants WHERE id = ?
       `,
       {
         replacements: [userId],
-        type: sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
       }
     );
 
@@ -84,7 +86,7 @@ export async function PUT(
       `,
       {
         replacements: [taskId, participantId],
-        type: sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
       }
     );
 
@@ -95,6 +97,46 @@ export async function PUT(
       );
     }
 
+    // Check if participant_tasks table exists, create it if it doesn't
+    try {
+      const [ptExists] = await sequelize.query(
+        `
+        SELECT COUNT(*) as count 
+        FROM information_schema.tables 
+        WHERE table_schema = DATABASE() 
+        AND table_name = 'participant_tasks'
+        `,
+        {
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if ((ptExists as any).count === 0) {
+        // Create participant_tasks table if it doesn't exist
+        await sequelize.query(`
+          CREATE TABLE participant_tasks (
+            id VARCHAR(36) PRIMARY KEY,
+            participantId VARCHAR(36) NOT NULL,
+            taskId VARCHAR(36) NOT NULL,
+            status ENUM('active', 'completed') NOT NULL DEFAULT 'active',
+            completedAt DATETIME NULL,
+            createdAt DATETIME NOT NULL,
+            updatedAt DATETIME NOT NULL,
+            FOREIGN KEY (participantId) REFERENCES participants(id) ON DELETE CASCADE,
+            FOREIGN KEY (taskId) REFERENCES tasks(id) ON DELETE CASCADE,
+            UNIQUE KEY task_participant_unique (taskId, participantId)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        `);
+        console.log("API: Created participant_tasks table on-demand");
+      }
+    } catch (tableError) {
+      console.error(
+        "API: Error checking/creating participant_tasks table:",
+        tableError
+      );
+      // Continue with the request even if this fails
+    }
+
     // Check if there's already a participant_task record
     const [existingParticipantTask] = await sequelize.query(
       `
@@ -103,7 +145,7 @@ export async function PUT(
       `,
       {
         replacements: [taskId, participantId],
-        type: sequelize.QueryTypes.SELECT,
+        type: QueryTypes.SELECT,
       }
     );
 
@@ -117,7 +159,7 @@ export async function PUT(
         `,
         {
           replacements: [status, taskId, participantId],
-          type: sequelize.QueryTypes.UPDATE,
+          type: QueryTypes.UPDATE,
         }
       );
     } else {
@@ -125,12 +167,12 @@ export async function PUT(
       await sequelize.query(
         `
         INSERT INTO participant_tasks 
-        (taskId, participantId, status, createdAt, updatedAt)
-        VALUES (?, ?, ?, NOW(), NOW())
+        (id, taskId, participantId, status, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, NOW(), NOW())
         `,
         {
-          replacements: [taskId, participantId, status],
-          type: sequelize.QueryTypes.INSERT,
+          replacements: [uuidv4(), taskId, participantId, status],
+          type: QueryTypes.INSERT,
         }
       );
     }

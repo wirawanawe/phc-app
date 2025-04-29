@@ -11,6 +11,11 @@ export default function ParticipantsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
   const [currentParticipant, setCurrentParticipant] =
     useState<Participant | null>(null);
   const [formData, setFormData] = useState({
@@ -178,22 +183,130 @@ export default function ParticipantsPage() {
     return selectedInsurance && selectedInsurance.name !== "Umum";
   };
 
+  // Add a function to synchronize participants data
+  const synchronizeParticipants = async () => {
+    setIsSyncing(true);
+    setSyncMessage(null);
+
+    try {
+      const response = await fetch("/api/admin/participants/sync", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        setSyncMessage({
+          text: "Participants synchronized successfully. Refreshing data...",
+          type: "success",
+        });
+        // Refresh the list after successful sync
+        await fetchParticipants();
+      } else {
+        const errorData = await response.json();
+        setSyncMessage({
+          text: errorData.error || "Failed to synchronize participants data",
+          type: "error",
+        });
+      }
+    } catch (error) {
+      console.error("Error synchronizing participants:", error);
+      setSyncMessage({
+        text: "An error occurred while synchronizing participants data",
+        type: "error",
+      });
+    } finally {
+      setIsSyncing(false);
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        setSyncMessage(null);
+      }, 5000);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-black">
           Participants Management
         </h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setIsFormOpen(true);
-          }}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Add New Participant
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={synchronizeParticipants}
+            disabled={isSyncing}
+            className={`px-4 py-2 ${
+              isSyncing ? "bg-gray-400" : "bg-purple-500 hover:bg-purple-600"
+            } text-white rounded flex items-center`}
+          >
+            {isSyncing ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                Synchronizing...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  ></path>
+                </svg>
+                Sync Participants
+              </>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              resetForm();
+              setIsFormOpen(true);
+            }}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Add New Participant
+          </button>
+        </div>
       </div>
+
+      {/* Synchronization Message */}
+      {syncMessage && (
+        <div
+          className={`mb-4 p-3 rounded-md ${
+            syncMessage.type === "success"
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {syncMessage.text}
+        </div>
+      )}
 
       {/* Form Modal */}
       {isFormOpen && (
@@ -368,6 +481,12 @@ export default function ParticipantsPage() {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Date of Birth
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Insurance
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
               </th>
@@ -376,13 +495,13 @@ export default function ParticipantsPage() {
           <tbody className="divide-y divide-gray-200">
             {isLoading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center">
+                <td colSpan={7} className="px-6 py-4 text-center">
                   Loading...
                 </td>
               </tr>
             ) : participants.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center">
+                <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                   No participants found. Add a new participant to get started.
                 </td>
               </tr>
@@ -400,6 +519,22 @@ export default function ParticipantsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-black">
                     {participant.dateOfBirth || "-"}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-black">
+                    {participant.insuranceId ? (
+                      <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        {insurances.find(
+                          (i) => i.id === participant.insuranceId
+                        )?.name || "Unknown"}
+                      </span>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      Active
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <TableActions

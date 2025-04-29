@@ -8,10 +8,7 @@ export async function GET() {
     await initializeDatabase();
 
     const specializations = await SpesializationModel.findAll({
-      where: {
-        isActive: true,
-      },
-      attributes: ["id", "name"],
+      attributes: ["id", "name", "isActive"],
       order: [["name", "ASC"]],
     });
 

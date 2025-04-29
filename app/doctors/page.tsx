@@ -1,23 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import DoctorCard from "../components/DoctorCard";
-import { getDictionary } from "../lib/dictionary";
-
-interface Dictionary {
-  doctors: {
-    title: string;
-    description: string;
-  };
-  common: {
-    menu: {
-      home: string;
-    };
-  };
-}
+import Navbar from "@/app/components/Navbar";
+import Footer from "@/app/components/Footer";
+import DoctorCard from "@/app/components/DoctorCard";
+import { useAuth } from "@/app/contexts/AuthContext";
+import { useRouter } from "next/navigation";
 
 interface Doctor {
   id: string;
@@ -29,223 +19,251 @@ interface Doctor {
   scheduleData?: string | null;
 }
 
-// List of practice days - will be replaced with dynamic data from API
-// const practiceDays = [
-//   { value: "", label: "Semua Hari" },
-//   { value: "Sen", label: "Senin" },
-//   { value: "Sel", label: "Selasa" },
-//   { value: "Rab", label: "Rabu" },
-//   { value: "Kam", label: "Kamis" },
-//   { value: "Jum", label: "Jumat" },
-//   { value: "Sab", label: "Sabtu" },
-// ];
+interface Specialization {
+  id: string;
+  name: string;
+  isActive: boolean;
+}
 
-// Rating filter options
-const ratingOptions = [
-  { value: 0, label: "Semua Rating" },
-  { value: 4.5, label: "4.5 & ke atas" },
-  { value: 4, label: "4.0 & ke atas" },
-  { value: 3.5, label: "3.5 & ke atas" },
-  { value: 3, label: "3.0 & ke atas" },
-];
+// Define the available practice days
+const PRACTICE_DAYS = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
 
 export default function DoctorsPage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSpecialty, setSelectedSpecialty] =
-    useState("Semua Spesialisasi");
-  const [selectedDay, setSelectedDay] = useState("");
-  const [selectedRating, setSelectedRating] = useState(0);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [dictionary, setDictionary] = useState<Dictionary | null>(null);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
-  const [specialties, setSpecialties] = useState<
-    { id: string; name: string }[]
-  >([]);
-  const [practiceDays, setPracticeDays] = useState<
-    { value: string; label: string }[]
-  >([{ value: "", label: "Semua Hari" }]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedSpecialty, setSelectedSpecialty] = useState<string>("");
+  const [selectedDay, setSelectedDay] = useState<string>("");
+  const [specialties, setSpecialties] = useState<Specialization[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderInterval = useRef<NodeJS.Timeout | null>(null);
+  const { user } = useAuth();
+  const router = useRouter();
 
-  // Fetch doctors from the API
+  // Fetch all data on page load
   useEffect(() => {
-    const fetchDoctors = async () => {
+    async function fetchData() {
       try {
-        setLoading(true);
-        const response = await fetch("/api/public/doctors");
+        setIsLoading(true);
 
-        if (response.ok) {
-          const data = await response.json();
-          setDoctors(data);
+        // Fetch all specializations
+        const specialtyResponse = await fetch("/api/public/specializations");
+        if (!specialtyResponse.ok) {
+          console.error("Failed to fetch specializations");
         } else {
-          setError("Failed to fetch doctors data");
+          const specialtyData = await specialtyResponse.json();
+          setSpecialties(specialtyData);
         }
-      } catch (err) {
-        console.error("Error fetching doctors:", err);
-        setError("Failed to load doctors");
+
+        // Fetch all doctors
+        const doctorResponse = await fetch("/api/public/doctors");
+        if (doctorResponse.ok) {
+          const doctorData = await doctorResponse.json();
+          setDoctors(doctorData);
+          setError(null);
+        } else {
+          console.error("Failed to fetch doctors");
+          setError("Gagal memuat data dokter. Silakan coba lagi nanti.");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setError("Terjadi kesalahan saat memuat data.");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
-    };
+    }
 
-    fetchDoctors();
+    fetchData();
   }, []);
 
-  // Fetch specialties from the API
-  useEffect(() => {
-    const fetchSpecialties = async () => {
-      try {
-        const response = await fetch("/api/public/specializations");
-        if (response.ok) {
-          const data = await response.json();
-          setSpecialties([{ id: "all", name: "Semua Spesialisasi" }, ...data]);
-        } else {
-          console.error("Failed to fetch specialties");
-        }
-      } catch (err) {
-        console.error("Error fetching specialties:", err);
-      }
-    };
-
-    fetchSpecialties();
-  }, []);
-
-  // Fetch practice days from the API
-  useEffect(() => {
-    const fetchPracticeDays = async () => {
-      try {
-        const response = await fetch("/api/public/practice-days");
-        if (response.ok) {
-          const data = await response.json();
-          setPracticeDays(data);
-        } else {
-          console.error("Failed to fetch practice days");
-        }
-      } catch (err) {
-        console.error("Error fetching practice days:", err);
-      }
-    };
-
-    fetchPracticeDays();
-  }, []);
-
-  useEffect(() => {
-    const loadDictionary = async () => {
-      const dict = await getDictionary("id");
-      setDictionary(dict as Dictionary);
-    };
-
-    loadDictionary();
-  }, []);
-
-  // Fallback text
-  const text = {
-    title: dictionary?.doctors?.title || "Temukan Dokter",
-    description:
-      dictionary?.doctors?.description ||
-      "Temukan dan konsultasikan dengan dokter terbaik yang sesuai dengan kebutuhan kesehatan Anda.",
-    home: dictionary?.common?.menu?.home || "Beranda",
-    findDoctors: "Cari Dokter",
-    searchPlaceholder: "Cari berdasarkan nama dokter...",
-    noDoctorsFound: "Tidak ada dokter yang ditemukan",
-    adjustSearch:
-      "Coba sesuaikan pencarian atau filter untuk menemukan yang Anda cari.",
-    resetFilters: "Reset filter",
-    joinTeam: "Bergabung dengan Tim Medis Kami",
-    joinDescription:
-      "Kami selalu mencari profesional kesehatan berbakat untuk bergabung dengan tim kami. Jika Anda memiliki passion dalam memberikan perawatan berkualitas, kami ingin mendengar dari Anda.",
-    exploreCareer: "Jelajahi Peluang Karir",
-    filterByDay: "Filter berdasarkan hari praktek",
-  };
-
-  // Helper function to check if doctor practices on selected day
-  const doctorPracticesOnDay = (doctor: Doctor, day: string): boolean => {
-    if (!day || !doctor.scheduleData) return true;
+  // Check if doctor is available on the selected day
+  const isDoctorAvailableOnDay = (doctor: Doctor, day: string): boolean => {
+    if (!day || day === "") return true;
+    if (!doctor.scheduleData) return false;
 
     try {
-      const schedule = JSON.parse(doctor.scheduleData);
-      console.log(`Checking if doctor ${doctor.name} practices on ${day}`, {
-        schedule,
-        type: Array.isArray(schedule) ? "array" : typeof schedule,
-      });
+      const scheduleData = JSON.parse(doctor.scheduleData);
 
-      // Handle array format (new format)
-      if (Array.isArray(schedule)) {
-        const result = schedule.includes(day);
-        console.log(`Array format - includes ${day}: ${result}`);
-        return result;
+      if (Array.isArray(scheduleData)) {
+        return scheduleData.includes(day);
+      } else if (typeof scheduleData === "object") {
+        return Object.keys(scheduleData).includes(day);
       }
 
-      // Handle object format (old format)
-      if (typeof schedule === "object" && schedule !== null) {
-        const keys = Object.keys(schedule);
-        const result = keys.includes(day);
-        console.log(
-          `Object format - keys: ${keys.join(
-            ", "
-          )} - includes ${day}: ${result}`
-        );
-        return result;
-      }
-
-      console.log("Unknown schedule format");
       return false;
     } catch (error) {
-      console.error(`Error parsing schedule data for ${doctor.name}:`, error);
-
-      // Fallback - check if the day appears in availability string
-      const result = doctor.availability.includes(day);
-      console.log(
-        `Fallback to availability string: ${doctor.availability} - includes ${day}: ${result}`
-      );
-      return result;
+      console.error("Error parsing schedule data:", error);
+      return false;
     }
   };
 
-  // Filter doctors based on search term, specialty, practice day, and rating
+  // Filter doctors based on search term, selected specialty, and practice day
   const filteredDoctors = doctors.filter((doctor) => {
     const matchesSearch = doctor.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesSpecialty =
-      selectedSpecialty === "Semua Spesialisasi" ||
-      doctor.specialty === selectedSpecialty;
-    const matchesDay =
-      selectedDay === "" || doctorPracticesOnDay(doctor, selectedDay);
-    const matchesRating =
-      selectedRating === 0 || doctor.rating >= selectedRating;
+      selectedSpecialty === "" || doctor.specialty === selectedSpecialty;
+    const matchesDay = isDoctorAvailableOnDay(doctor, selectedDay);
 
-    return matchesSearch && matchesSpecialty && matchesDay && matchesRating;
+    return matchesSearch && matchesSpecialty && matchesDay;
   });
 
-  const resetAllFilters = () => {
+  const clearFilters = () => {
     setSearchTerm("");
-    setSelectedSpecialty("Semua Spesialisasi");
+    setSelectedSpecialty("");
     setSelectedDay("");
-    setSelectedRating(0);
   };
 
-  // Count how many filters are active
-  const activeFilterCount = [
-    searchTerm !== "",
-    selectedSpecialty !== "Semua Spesialisasi",
-    selectedDay !== "",
-    selectedRating !== 0,
-  ].filter(Boolean).length;
+  // Setup slider auto-rotation
+  useEffect(() => {
+    // Start the slider rotation when component mounts
+    startSliderRotation();
+
+    // Cleanup interval on component unmount
+    return () => {
+      if (sliderInterval.current) {
+        clearInterval(sliderInterval.current);
+      }
+    };
+  }, []);
+
+  // Function to start the slider rotation
+  const startSliderRotation = useCallback(() => {
+    if (sliderInterval.current) {
+      clearInterval(sliderInterval.current);
+    }
+
+    sliderInterval.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % 3);
+    }, 5000); // Change slide every 5 seconds
+  }, []);
+
+  // Handle manual slide navigation
+  const goToSlide = useCallback(
+    (index: number) => {
+      setCurrentSlide(index);
+
+      // Reset the rotation timer when manually changing slides
+      if (sliderInterval.current) {
+        clearInterval(sliderInterval.current);
+      }
+      startSliderRotation();
+    },
+    [startSliderRotation]
+  );
+
+  // If there's an error loading doctors
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <Navbar />
+        <div className="container mx-auto px-4 py-16">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 max-w-2xl mx-auto">
+            <div className="text-center">
+              <svg
+                className="w-16 h-16 text-red-500 mx-auto mb-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                Tidak dapat memuat daftar dokter
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mb-6">{error}</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-md"
+              >
+                Muat Ulang
+              </button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
-    <main className="min-h-screen">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
 
       <div className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {text.title}
+              Temukan Dokter Terbaik
             </h1>
             <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-              {text.description}
+              Konsultasikan kesehatan Anda dengan dokter-dokter berkualitas dan
+              berpengalaman untuk mendapatkan perawatan terbaik sesuai kebutuhan
+              Anda.
             </p>
+          </div>
+
+          {/* Mobile Hero CTA - only visible on small screens */}
+          <div className="md:hidden mt-6 mb-8">
+            <div className="flex flex-col space-y-3">
+              <Link
+                href="/appointments"
+                className="btn bg-primary hover:bg-primary-dark text-white px-6 py-3 font-medium rounded-lg text-center shadow-md"
+              >
+                <div className="flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  Buat Janji Dokter
+                </div>
+              </Link>
+
+              <button
+                onClick={() =>
+                  document
+                    .getElementById("filter-section")
+                    ?.scrollIntoView({ behavior: "smooth" })
+                }
+                className="btn bg-white border border-primary text-primary hover:bg-gray-50 px-6 py-3 font-medium rounded-lg text-center shadow-sm"
+              >
+                <div className="flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 mr-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                    />
+                  </svg>
+                  Filter Dokter
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center justify-center mb-10">
@@ -264,7 +282,7 @@ export default function DoctorsPage() {
                     >
                       <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
                     </svg>
-                    {text.home}
+                    Beranda
                   </Link>
                 </li>
                 <li aria-current="page">
@@ -282,7 +300,7 @@ export default function DoctorsPage() {
                       ></path>
                     </svg>
                     <span className="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400 md:ml-2">
-                      {text.findDoctors}
+                      Daftar Dokter
                     </span>
                   </div>
                 </li>
@@ -292,570 +310,456 @@ export default function DoctorsPage() {
         </div>
       </div>
 
-      <section className="py-16 bg-white dark:bg-gray-800">
+      {/* Filter Section */}
+      <section
+        className="py-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700"
+        id="filter-section"
+      >
         <div className="container mx-auto px-4">
-          <div className="mb-12">
-            {/* Desktop filters */}
-            <div className="hidden md:block mb-8">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <div className="mb-6">
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Filter Pencarian
-                  </h2>
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 text-center">
+              Filter Pencarian Dokter
+            </h2>
 
-                  {/* Search */}
-                  <div className="mb-5">
-                    <label
-                      htmlFor="search"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                    >
-                      Kata Kunci
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                        <svg
-                          className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                          aria-hidden="true"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 20 20"
-                        >
-                          <path
-                            stroke="currentColor"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                          />
-                        </svg>
-                      </div>
-                      <input
-                        id="search"
-                        type="search"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full ps-10 p-2.5 focus:ring-primary focus:border-primary"
-                        placeholder={text.searchPlaceholder}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                    {/* Specialty filter */}
-                    <div>
-                      <label
-                        htmlFor="specialty"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Spesialisasi
-                      </label>
-                      <select
-                        id="specialty"
-                        value={selectedSpecialty}
-                        onChange={(e) => setSelectedSpecialty(e.target.value)}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full p-2.5 focus:ring-primary focus:border-primary"
-                      >
-                        {specialties.map((specialty) => (
-                          <option key={specialty.id} value={specialty.name}>
-                            {specialty.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Day filter */}
-                    <div>
-                      <label
-                        htmlFor="practice-day"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Hari Praktik
-                      </label>
-                      <select
-                        id="practice-day"
-                        value={selectedDay}
-                        onChange={(e) => setSelectedDay(e.target.value)}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full p-2.5 focus:ring-primary focus:border-primary"
-                        aria-label={text.filterByDay}
-                      >
-                        {practiceDays.map((day) => (
-                          <option key={day.value} value={day.value}>
-                            {day.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Rating filter */}
-                    <div>
-                      <label
-                        htmlFor="rating"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                      >
-                        Rating
-                      </label>
-                      <select
-                        id="rating"
-                        value={selectedRating}
-                        onChange={(e) =>
-                          setSelectedRating(Number(e.target.value))
-                        }
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full p-2.5 focus:ring-primary focus:border-primary"
-                      >
-                        {ratingOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Reset filters button */}
-                  {(searchTerm ||
-                    selectedSpecialty !== "Semua Spesialisasi" ||
-                    selectedDay !== "" ||
-                    selectedRating !== 0) && (
-                    <div className="mt-5 flex justify-end">
-                      <button
-                        onClick={resetAllFilters}
-                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary-dark"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4 mr-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                          />
-                        </svg>
-                        {text.resetFilters}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* Result summary */}
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    Menampilkan{" "}
-                    <span className="font-medium">
-                      {filteredDoctors.length}
-                    </span>{" "}
-                    dari <span className="font-medium">{doctors.length}</span>{" "}
-                    dokter
-                  </p>
-
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    {activeFilterCount > 0 ? (
-                      <span>{activeFilterCount} filter aktif</span>
-                    ) : (
-                      <span>Tidak ada filter aktif</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile filter button */}
-            <div className="md:hidden mb-6">
-              <button
-                onClick={() => setIsFilterOpen(!isFilterOpen)}
-                className="w-full flex items-center justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-lg shadow-sm"
-              >
-                <div className="flex items-center">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5 text-gray-500 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
+            <div className="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Filter by Doctor Name */}
+                <div>
+                  <label
+                    htmlFor="search"
+                    className="block text-gray-700 dark:text-gray-300 mb-2 font-medium"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                    />
-                  </svg>
-                  <span className="font-medium">Filter</span>
-                  {activeFilterCount > 0 && (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary text-white">
-                      {activeFilterCount}
-                    </span>
-                  )}
-                </div>
-                <svg
-                  className={`w-5 h-5 text-gray-500 transition-transform ${
-                    isFilterOpen ? "transform rotate-180" : ""
-                  }`}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
+                    Nama Dokter
+                  </label>
+                  <input
+                    type="text"
+                    id="search"
+                    placeholder="Masukkan nama dokter..."
+                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                </svg>
-              </button>
-
-              {/* Mobile filters panel */}
-              {isFilterOpen && (
-                <div className="mt-3 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm">
-                  <div className="space-y-4">
-                    {/* Search */}
-                    <div>
-                      <label
-                        htmlFor="mobile-search"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        Kata Kunci
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
-                          <svg
-                            className="w-4 h-4 text-gray-500 dark:text-gray-400"
-                            fill="none"
-                            viewBox="0 0 20 20"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth="2"
-                              d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-                            />
-                          </svg>
-                        </div>
-                        <input
-                          id="mobile-search"
-                          type="search"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full ps-10 p-2.5"
-                          placeholder={text.searchPlaceholder}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Specialty filter */}
-                    <div>
-                      <label
-                        htmlFor="mobile-specialty"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        Spesialisasi
-                      </label>
-                      <select
-                        id="mobile-specialty"
-                        value={selectedSpecialty}
-                        onChange={(e) => setSelectedSpecialty(e.target.value)}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full p-2.5"
-                      >
-                        {specialties.map((specialty) => (
-                          <option key={specialty.id} value={specialty.name}>
-                            {specialty.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Day filter */}
-                    <div>
-                      <label
-                        htmlFor="mobile-day"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        Hari Praktik
-                      </label>
-                      <select
-                        id="mobile-day"
-                        value={selectedDay}
-                        onChange={(e) => setSelectedDay(e.target.value)}
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full p-2.5"
-                      >
-                        {practiceDays.map((day) => (
-                          <option key={day.value} value={day.value}>
-                            {day.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Rating filter */}
-                    <div>
-                      <label
-                        htmlFor="mobile-rating"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                      >
-                        Rating
-                      </label>
-                      <select
-                        id="mobile-rating"
-                        value={selectedRating}
-                        onChange={(e) =>
-                          setSelectedRating(Number(e.target.value))
-                        }
-                        className="bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-lg block w-full p-2.5"
-                      >
-                        {ratingOptions.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex justify-between pt-4">
-                      <button
-                        onClick={resetAllFilters}
-                        className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-                      >
-                        Reset semua
-                      </button>
-                      <button
-                        onClick={() => setIsFilterOpen(false)}
-                        className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-md hover:bg-primary-dark transition-colors"
-                      >
-                        Terapkan Filter
-                      </button>
-                    </div>
-                  </div>
                 </div>
-              )}
-            </div>
 
-            {/* Active filters display */}
-            {(searchTerm ||
-              selectedSpecialty !== "Semua Spesialisasi" ||
-              selectedDay !== "" ||
-              selectedRating !== 0) && (
-              <div className="flex items-center justify-between mb-6 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div className="flex flex-wrap gap-2">
-                  {searchTerm && (
-                    <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                      <span>Kata kunci: {searchTerm}</span>
-                      <button
-                        onClick={() => setSearchTerm("")}
-                        className="ml-1.5 text-primary hover:text-primary-dark"
-                        aria-label="Remove search filter"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  )}
-                  {selectedSpecialty !== "Semua Spesialisasi" && (
-                    <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                      <span>Spesialisasi: {selectedSpecialty}</span>
-                      <button
-                        onClick={() =>
-                          setSelectedSpecialty("Semua Spesialisasi")
-                        }
-                        className="ml-1.5 text-primary hover:text-primary-dark"
-                        aria-label="Remove specialty filter"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  )}
-                  {selectedDay && (
-                    <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                      <span>
-                        Hari Praktek:{" "}
-                        {
-                          practiceDays.find((d) => d.value === selectedDay)
-                            ?.label
-                        }
-                      </span>
-                      <button
-                        onClick={() => setSelectedDay("")}
-                        className="ml-1.5 text-primary hover:text-primary-dark"
-                        aria-label="Remove day filter"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  )}
-                  {selectedRating > 0 && (
-                    <span className="inline-flex items-center px-2 py-1 bg-primary/10 text-primary rounded-full text-sm">
-                      <span className="flex items-center">
-                        Rating: {selectedRating}+
-                        <svg
-                          className="h-3 w-3 text-yellow-400 ml-1"
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </span>
-                      <button
-                        onClick={() => setSelectedRating(0)}
-                        className="ml-1.5 text-primary hover:text-primary-dark"
-                        aria-label="Remove rating filter"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-4 w-4"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </button>
-                    </span>
-                  )}
-                </div>
-                <button
-                  onClick={resetAllFilters}
-                  className="text-sm text-gray-600 dark:text-gray-300 hover:text-primary hover:underline"
-                >
-                  {text.resetFilters}
-                </button>
-              </div>
-            )}
-
-            {/* Loading state */}
-            {loading && (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            )}
-
-            {/* Error state */}
-            {error && !loading && (
-              <div className="text-center p-8">
-                <p className="text-red-500 mb-2">{error}</p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="text-primary hover:underline"
-                >
-                  Coba lagi
-                </button>
-              </div>
-            )}
-
-            {/* Show doctors */}
-            {!loading && !error && (
-              <>
-                {filteredDoctors.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredDoctors.map((doctor) => (
-                      <DoctorCard
-                        key={doctor.id}
-                        id={doctor.id}
-                        name={doctor.name}
-                        specialty={doctor.specialty}
-                        imageUrl={doctor.imageUrl}
-                        rating={doctor.rating}
-                        availability={doctor.availability}
-                        scheduleData={doctor.scheduleData}
-                      />
+                {/* Filter by Specialization */}
+                <div>
+                  <label
+                    htmlFor="specialty"
+                    className="block text-gray-700 dark:text-gray-300 mb-2 font-medium"
+                  >
+                    Spesialisasi
+                  </label>
+                  <select
+                    id="specialty"
+                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={selectedSpecialty}
+                    onChange={(e) => setSelectedSpecialty(e.target.value)}
+                  >
+                    <option value="">Semua Spesialisasi</option>
+                    {specialties.map((specialty) => (
+                      <option key={specialty.id} value={specialty.name}>
+                        {specialty.name} {!specialty.isActive && "(Nonaktif)"}
+                      </option>
                     ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
+                  </select>
+                </div>
+
+                {/* Filter by Practice Day */}
+                <div>
+                  <label
+                    htmlFor="practiceDays"
+                    className="block text-gray-700 dark:text-gray-300 mb-2 font-medium"
+                  >
+                    Hari Praktek
+                  </label>
+                  <select
+                    id="practiceDays"
+                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
+                    value={selectedDay}
+                    onChange={(e) => setSelectedDay(e.target.value)}
+                  >
+                    <option value="">Semua Hari</option>
+                    {PRACTICE_DAYS.map((day) => (
+                      <option key={day} value={day}>
+                        {day}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Clear Filters Button */}
+              {(searchTerm || selectedSpecialty || selectedDay) && (
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center text-primary hover:text-primary-dark"
+                  >
                     <svg
-                      className="w-16 h-16 text-gray-400 mx-auto mb-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
                       xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 mr-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
                     >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      ></path>
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                      {text.noDoctorsFound}
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                      {text.adjustSearch}
-                    </p>
-                    <button
-                      onClick={resetAllFilters}
-                      className="text-primary hover:underline"
-                    >
-                      {text.resetFilters}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+                    Hapus Filter
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Join our team section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-900">
+      {/* Doctors Section */}
+      <section className="py-12 bg-white dark:bg-gray-800" id="doctors-section">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-              {text.joinTeam}
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Dokter Tersedia
             </h2>
-            <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-              {text.joinDescription}
+            <p className="mt-2 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+              {filteredDoctors.length}
+              {filteredDoctors.length === 1
+                ? " dokter ditemukan"
+                : " dokter ditemukan"}
+              {selectedSpecialty && ` dengan spesialisasi ${selectedSpecialty}`}
+              {selectedDay && ` yang praktek pada hari ${selectedDay}`}
             </p>
-            <div className="mt-8">
-              <Link href="/careers" className="btn btn-primary">
-                {text.exploreCareer}
-              </Link>
+          </div>
+
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+              <p className="text-gray-600 dark:text-gray-300">
+                Memuat daftar dokter...
+              </p>
+            </div>
+          ) : (
+            <div className="mb-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {filteredDoctors.length === 0 ? (
+                  <div className="col-span-full">
+                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 text-center">
+                      <img
+                        src="/images/doctor-empty.svg"
+                        alt="Tidak ada dokter"
+                        className="w-48 h-48 mx-auto mb-6"
+                        onError={(e) => {
+                          e.currentTarget.src =
+                            "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 24 24'%3E%3Cpath fill='%239CA3AF' d='M12 4a4 4 0 0 1 4 4a4 4 0 0 1-4 4a4 4 0 0 1-4-4a4 4 0 0 1 4-4m0 10c4.42 0 8 1.79 8 4v2H4v-2c0-2.21 3.58-4 8-4'/%3E%3C/svg%3E";
+                        }}
+                      />
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+                        Tidak Ada Dokter Ditemukan
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                        Tidak ada dokter yang sesuai dengan kriteria pencarian
+                        Anda. Silakan ubah filter atau hapus beberapa filter
+                        untuk melihat lebih banyak hasil.
+                      </p>
+                      <button
+                        onClick={clearFilters}
+                        className="inline-flex items-center justify-center bg-primary hover:bg-primary-dark text-white px-6 py-3 rounded-md font-medium text-sm transition-colors"
+                      >
+                        Hapus Semua Filter
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  filteredDoctors.map((doctor) => (
+                    <DoctorCard
+                      key={doctor.id}
+                      id={doctor.id}
+                      name={doctor.name}
+                      specialty={doctor.specialty}
+                      imageUrl={
+                        doctor.imageUrl || "/images/doctor-placeholder.svg"
+                      }
+                      rating={doctor.rating}
+                      availability={doctor.availability}
+                      scheduleData={doctor.scheduleData}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Call to Action - Slider for Mobile */}
+      <section className="py-16 bg-primary overflow-hidden">
+        <div className="container mx-auto px-4">
+          {/* Desktop CTA */}
+          <div className="hidden md:block text-center">
+            <h2 className="text-3xl font-bold text-white mb-4">
+              Butuh Konsultasi Kesehatan?
+            </h2>
+            <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
+              Jangan tunda masalah kesehatan Anda. Konsultasikan dengan dokter
+              terbaik kami dan dapatkan perawatan yang tepat.
+            </p>
+            <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+              {user ? (
+                <>
+                  <Link
+                    href="/appointments"
+                    className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
+                  >
+                    Buat Janji Temu
+                  </Link>
+                  <Link
+                    href="#doctors-section"
+                    className="btn border border-white text-white hover:bg-white/10 px-6 py-3 font-medium rounded-md"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      document
+                        .getElementById("doctors-section")
+                        ?.scrollIntoView({ behavior: "smooth" });
+                    }}
+                  >
+                    Lihat Dokter
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
+                  >
+                    Daftar Sekarang
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="btn border border-white text-white hover:bg-white/10 px-6 py-3 font-medium rounded-md"
+                  >
+                    Masuk
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Slider - only visible on mobile */}
+          <div className="md:hidden">
+            <div className="relative mx-auto max-w-md overflow-hidden">
+              {/* Slide 1: Consultation */}
+              <div
+                className="absolute inset-0 transition-transform ease-in-out duration-500 min-w-full"
+                style={{
+                  transform: `translateX(${
+                    currentSlide === 0
+                      ? "0%"
+                      : currentSlide === 1
+                      ? "-100%"
+                      : "-200%"
+                  })`,
+                  opacity: currentSlide === 0 ? 1 : 0,
+                  zIndex: currentSlide === 0 ? 10 : 0,
+                  pointerEvents: currentSlide === 0 ? "auto" : "none",
+                }}
+              >
+                <div className="p-4">
+                  <h2 className="text-2xl font-bold text-white mb-4 text-center">
+                    Butuh Konsultasi Kesehatan?
+                  </h2>
+                  <p className="text-lg text-white/90 mb-6 text-center">
+                    Jangan tunda masalah kesehatan Anda. Konsultasikan dengan
+                    dokter terbaik kami.
+                  </p>
+                  <div className="flex justify-center">
+                    {user ? (
+                      <Link
+                        href="/appointments"
+                        className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
+                      >
+                        Buat Janji Temu
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/register"
+                        className="btn bg-white text-primary hover:bg-gray-100 px-6 py-3 font-medium rounded-md"
+                      >
+                        Daftar Sekarang
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Slide 2: Mobile App */}
+              <div
+                className="absolute inset-0 transition-transform ease-in-out duration-500 min-w-full"
+                style={{
+                  transform: `translateX(${
+                    currentSlide === 0
+                      ? "100%"
+                      : currentSlide === 1
+                      ? "0%"
+                      : "-100%"
+                  })`,
+                  opacity: currentSlide === 1 ? 1 : 0,
+                  zIndex: currentSlide === 1 ? 10 : 0,
+                  pointerEvents: currentSlide === 1 ? "auto" : "none",
+                }}
+              >
+                <div className="mx-4">
+                  <div className="bg-gradient-to-r from-blue-600 to-primary rounded-lg p-6">
+                    <div className="flex flex-col items-center">
+                      <h2 className="text-2xl font-bold text-white mb-3 text-center">
+                        Unduh Aplikasi Mobile Kami
+                      </h2>
+                      <p className="text-white/90 mb-4 text-center">
+                        Buat janji temu, konsultasi online, dan akses riwayat
+                        kesehatan Anda kapan saja, di mana saja.
+                      </p>
+                      <div className="relative w-full h-40 my-4">
+                        <Image
+                          src="/mobile-app-mockup.png"
+                          alt="PHC Mobile App"
+                          fill
+                          style={{ objectFit: "contain" }}
+                        />
+                      </div>
+                      <div className="flex space-x-3 mt-2">
+                        <Link href="#" className="w-32 h-auto">
+                          <Image
+                            src="/app-store-badge.png"
+                            alt="Download on App Store"
+                            width={120}
+                            height={35}
+                          />
+                        </Link>
+                        <Link href="#" className="w-32 h-auto">
+                          <Image
+                            src="/google-play-badge.png"
+                            alt="Get it on Google Play"
+                            width={120}
+                            height={35}
+                          />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Slide 3: Special Promo */}
+              <div
+                className="absolute inset-0 transition-transform ease-in-out duration-500 min-w-full"
+                style={{
+                  transform: `translateX(${
+                    currentSlide === 0
+                      ? "200%"
+                      : currentSlide === 1
+                      ? "100%"
+                      : "0%"
+                  })`,
+                  opacity: currentSlide === 2 ? 1 : 0,
+                  zIndex: currentSlide === 2 ? 10 : 0,
+                  pointerEvents: currentSlide === 2 ? "auto" : "none",
+                }}
+              >
+                <div className="mx-4">
+                  <div className="bg-gradient-to-r from-purple-600 to-pink-500 rounded-lg p-6">
+                    <div className="text-center">
+                      <div className="inline-block bg-white/20 px-3 py-1 rounded-full text-white text-sm font-medium mb-3">
+                        Promo Khusus
+                      </div>
+                      <h2 className="text-2xl font-bold text-white mb-3">
+                        Diskon 20% untuk Pemeriksaan Pertama
+                      </h2>
+                      <p className="text-white/90 mb-6">
+                        Berlaku untuk pasien baru yang mendaftar melalui
+                        aplikasi mobile kami.
+                      </p>
+                      <Link
+                        href="/register"
+                        className="inline-block bg-white text-purple-600 px-6 py-3 rounded-md font-medium hover:bg-gray-100 transition-colors"
+                      >
+                        Klaim Sekarang
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Height spacer to maintain layout */}
+              <div style={{ height: "320px" }} aria-hidden="true"></div>
+            </div>
+
+            {/* Slider Navigation Dots */}
+            <div className="flex justify-center mt-6 space-x-3">
+              {[0, 1, 2].map((index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                    currentSlide === index
+                      ? "bg-white scale-110"
+                      : "bg-white/50 hover:bg-white/70"
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                ></button>
+              ))}
+            </div>
+
+            {/* Slider Navigation Arrows */}
+            <div className="flex justify-between mt-6 px-2">
+              <button
+                onClick={() => goToSlide((currentSlide - 1 + 3) % 3)}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                aria-label="Previous slide"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+              <button
+                onClick={() => goToSlide((currentSlide + 1) % 3)}
+                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                aria-label="Next slide"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
             </div>
           </div>
         </div>
       </section>
 
       <Footer />
-    </main>
+    </div>
   );
 }

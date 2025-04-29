@@ -47,10 +47,9 @@ export default function ProgramDetailPage() {
   const [taskAction, setTaskAction] = useState<
     "complete" | "reactivate" | null
   >(null);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (loading) return;
-
     if (!user) {
       console.log("User not authenticated, redirecting to login");
       router.push("/login");
@@ -59,40 +58,38 @@ export default function ProgramDetailPage() {
 
     console.log("User authenticated, fetching program details for ID:", id);
     fetchProgramDetail();
-  }, [user, router, id, loading]);
+  }, [user, router, id]);
 
   const fetchProgramDetail = async () => {
-    console.log("Starting to fetch program detail for ID:", id);
+    if (!user) return;
     setLoading(true);
+    setError(null);
+
     try {
       const response = await fetch(`/api/participants/my-programs/${id}`, {
         credentials: "include",
       });
 
-      console.log("API Response status:", response.status);
-
-      if (response.status === 401) {
-        console.log("Authentication failed (401)");
-        setError("Sesi Anda telah berakhir. Silakan masuk kembali.");
-        router.push("/login");
-        return;
-      }
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("API error response:", errorData);
-        throw new Error(errorData.error || "Gagal mengambil detail program");
+        if (response.status === 401) {
+          router.push("/login");
+          return;
+        }
+        if (response.status === 404) {
+          setNotFound(true);
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch program details");
       }
 
       const data = await response.json();
-      console.log("Program details fetched successfully:", data.name);
       setProgram(data);
+      setNotFound(false);
     } catch (err) {
       console.error("Error fetching program details:", err);
       setError(
-        err instanceof Error
-          ? err.message
-          : "Gagal memuat detail program. Silakan coba lagi nanti."
+        err instanceof Error ? err.message : "Failed to fetch program details"
       );
     } finally {
       setLoading(false);
@@ -283,13 +280,13 @@ export default function ProgramDetailPage() {
     }
   };
 
-  if (loading && !program) {
+  if (loading) {
     return (
       <>
         <Navbar />
-        <div className="container mx-auto py-8 px-4 min-h-screen">
+        <div className="container mx-auto py-8 px-4 min-h-screen bg-gray-50">
           <div className="flex justify-center items-center h-64">
-            <div className="text-gray-500">Memuat detail program...</div>
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         </div>
         <Footer />
@@ -301,7 +298,7 @@ export default function ProgramDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="container mx-auto py-8 px-4 min-h-screen">
+        <div className="container mx-auto py-8 px-4 min-h-screen bg-gray-50">
           <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
             {error}
           </div>
@@ -321,7 +318,7 @@ export default function ProgramDetailPage() {
     return (
       <>
         <Navbar />
-        <div className="container mx-auto py-8 px-4 min-h-screen">
+        <div className="container mx-auto py-8 px-4 min-h-screen bg-gray-50">
           <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
             Program tidak ditemukan
           </div>

@@ -3,6 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { defaultLocale } from "./i18n-config";
 import { AuthProvider } from "./contexts/AuthContext";
+import { WebsiteSettingsProvider } from "./contexts/WebsiteSettingsContext";
+import { Toaster } from "react-hot-toast";
+import MobileBottomNav from "./components/MobileBottomNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +36,13 @@ export default function RootLayout({
         className="min-h-screen bg-black text-gray-100"
         suppressHydrationWarning={true}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <WebsiteSettingsProvider>
+            {children}
+            <MobileBottomNav />
+            <Toaster position="top-right" />
+          </WebsiteSettingsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

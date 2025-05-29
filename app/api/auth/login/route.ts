@@ -10,7 +10,6 @@ const JWT_SECRET =
   process.env.JWT_SECRET || "default-secret-key-for-phc-app-2024";
 
 export async function POST(request: NextRequest) {
-  console.log("LOGIN API: Received login request");
   try {
     // Parse request JSON safely
     let email = "";
@@ -28,10 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`LOGIN API: Attempting login for: ${email}`);
-
     if (!email || !password) {
-      console.log("LOGIN API: Missing email/username or password");
       return NextResponse.json(
         { error: "Email/username dan password diperlukan" },
         { status: 400 }
@@ -41,7 +37,6 @@ export async function POST(request: NextRequest) {
     // Initialize database with error handling
     try {
       await initializeDatabase();
-      console.log("LOGIN API: Database initialized");
     } catch (dbError) {
       console.error("LOGIN API: Database initialization error", dbError);
       return NextResponse.json(
@@ -70,17 +65,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!user) {
-      console.log(`LOGIN API: User not found for: ${email}`);
       return NextResponse.json(
         { error: "Email/username atau password tidak valid" },
         { status: 401 }
       );
     }
-    console.log(`LOGIN API: User found with ID: ${user.id}`);
 
     // Check if user is active
     if (user.isActive === false) {
-      console.log(`LOGIN API: User is inactive: ${user.id}`);
       return NextResponse.json(
         { error: "Akun ini tidak aktif. Silakan hubungi administrator." },
         { status: 403 }
@@ -100,18 +92,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isPasswordValid) {
-      console.log(`LOGIN API: Invalid password for user: ${user.id}`);
       return NextResponse.json(
         { error: "Email/username atau password tidak valid" },
         { status: 401 }
       );
     }
-    console.log(`LOGIN API: Password verified for user: ${user.id}`);
 
     // Update lastLogin
     try {
       await user.update({ lastLogin: new Date().toISOString() });
-      console.log(`LOGIN API: Updated lastLogin for user: ${user.id}`);
     } catch (updateError) {
       // Continue even if this fails - not critical
       console.error("LOGIN API: Error updating lastLogin", updateError);
@@ -128,7 +117,6 @@ export async function POST(request: NextRequest) {
         userId: userData.id,
         role: userData.role,
       });
-      console.log("LOGIN API: Token generated successfully");
     } catch (tokenError) {
       console.error("LOGIN API: Error generating token", tokenError);
       return NextResponse.json(
@@ -148,6 +136,12 @@ export async function POST(request: NextRequest) {
       isActive: userData.isActive !== false, // Default to true if undefined
     };
 
+    // Get client IP address
+    const clientIp =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+
     // Create response object
     const response = NextResponse.json({
       success: true,
@@ -158,6 +152,7 @@ export async function POST(request: NextRequest) {
 
     // Set cookies with appropriate options
     try {
+      // Set auth token cookie
       response.cookies.set({
         name: "phc_token",
         value: token,
@@ -167,7 +162,17 @@ export async function POST(request: NextRequest) {
         path: "/",
         sameSite: "lax",
       });
-      console.log("LOGIN API: Cookie set successfully");
+
+      // Set session IP cookie
+      response.cookies.set({
+        name: "session_ip",
+        value: clientIp,
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        maxAge: 60 * 30, // 30 minutes
+        path: "/",
+        sameSite: "lax",
+      });
     } catch (cookieError) {
       console.error("LOGIN API: Error setting cookie", cookieError);
       // Continue anyway since we're returning the user data

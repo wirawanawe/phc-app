@@ -3,8 +3,10 @@ import { verifyToken } from "@/app/utils/auth";
 import { sequelize } from "@/app/models";
 import { QueryTypes } from "sequelize";
 
+// Force dynamic rendering for this route
+export const dynamic = "force-dynamic";
+
 export async function GET(req: NextRequest) {
-  console.log("API: Received request to fetch enrolled programs");
   try {
     // Get token from cookie
     const token = req.cookies.get("phc_token")?.value;
@@ -19,12 +21,7 @@ export async function GET(req: NextRequest) {
     // Use token from cookie or header
     const authToken = token || headerToken;
 
-    // Log authentication info (without exposing full token)
-    console.log("API: Authentication - Cookie token exists:", !!token);
-    console.log("API: Authentication - Header token exists:", !!headerToken);
-
     if (!authToken) {
-      console.log("API: No authentication token found");
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -34,7 +31,6 @@ export async function GET(req: NextRequest) {
     try {
       const payload = verifyToken(authToken);
       if (!payload || !payload.userId) {
-        console.log("API: Invalid token or missing userId in payload");
         return NextResponse.json(
           { error: "Invalid authentication token" },
           { status: 401 }
@@ -42,7 +38,6 @@ export async function GET(req: NextRequest) {
       }
 
       const userId = payload.userId;
-      console.log("API: Authenticated user ID:", userId);
 
       // Get the participant associated with this user
       const [participant] = await sequelize.query(
@@ -56,7 +51,6 @@ export async function GET(req: NextRequest) {
       );
 
       if (!participant) {
-        console.log("API: No participant profile found for user ID:", userId);
         return NextResponse.json(
           { error: "Participant profile not found" },
           { status: 404 }
@@ -64,7 +58,6 @@ export async function GET(req: NextRequest) {
       }
 
       const participantId = (participant as any).id;
-      console.log("API: Found participant ID:", participantId);
 
       // Fetch all enrolled programs for this participant
       const enrollments = await sequelize.query(
@@ -93,11 +86,6 @@ export async function GET(req: NextRequest) {
           replacements: [participantId],
           type: QueryTypes.SELECT,
         }
-      );
-
-      console.log(
-        "API: Found enrollments count:",
-        (enrollments as any[]).length
       );
 
       // For each program, fetch the tasks and calculate progress
@@ -165,7 +153,6 @@ export async function GET(req: NextRequest) {
               tasks = taskResults;
             }
           } catch (taskError) {
-            console.error("API: Error fetching tasks:", taskError);
             // If there's an error, just set tasks to empty array
             tasks = [];
           }
@@ -212,20 +199,14 @@ export async function GET(req: NextRequest) {
         })
       );
 
-      console.log(
-        "API: Processed programs count:",
-        programsWithProgress.length
-      );
       return NextResponse.json(programsWithProgress);
     } catch (tokenError) {
-      console.error("API: Token verification error:", tokenError);
       return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
       );
     }
   } catch (error) {
-    console.error("API: Error fetching enrolled programs:", error);
     return NextResponse.json(
       { error: "Failed to fetch enrolled programs" },
       { status: 500 }

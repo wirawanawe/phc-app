@@ -8,7 +8,7 @@ export default function Footer() {
   const { settings } = useWebsiteSettings();
 
   return (
-    <footer className="bg-gray-800 text-white py-8 hidden md:block">
+    <footer className="bg-[#E32345] text-white py-8 hidden md:block">
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
@@ -194,44 +194,6 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
-        {/* Store badges - Add it before the border */}
-        <div className="mt-8 flex flex-col items-center">
-          <h3 className="text-lg font-bold mb-4 text-white">
-            Download Aplikasi PHC
-          </h3>
-          <div className="flex space-x-4 mb-6">
-            <Link href="#" className="transition transform hover:scale-105">
-              <Image
-                src="/google-play-badge.png"
-                alt="Get it on Google Play"
-                width={180}
-                height={53}
-                className="shadow-md rounded-md"
-              />
-            </Link>
-            <Link href="#" className="transition transform hover:scale-105">
-              <Image
-                src="/app-store-badge.png"
-                alt="Download on the App Store"
-                width={180}
-                height={53}
-                className="shadow-md rounded-md"
-              />
-            </Link>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between">
-          <p className="text-sm text-gray-400 mb-4 md:mb-0">
-            &copy; {new Date().getFullYear()} PHC. All rights reserved.
-          </p>
-          <div className="flex space-x-4">
-            <span className="text-sm text-gray-400">Privacy Policy</span>
-            <span className="text-sm text-gray-400">Terms of Service</span>
-          </div>
-        </div>
-
         {/* Social Media Icons Row */}
         <div className="mt-6 flex justify-center space-x-6">
           {/* Facebook */}
@@ -369,6 +331,16 @@ export default function Footer() {
               </svg>
             </span>
           )}
+        </div>
+
+        <div className="border-t border-gray-700 mt-8 pt-6 flex flex-col md:flex-row justify-between">
+          <p className="text-sm text-gray-400 mb-4 md:mb-0">
+            &copy; {new Date().getFullYear()} PHC. All rights reserved.
+          </p>
+          <div className="flex space-x-4">
+            <span className="text-sm text-gray-400">Privacy Policy</span>
+            <span className="text-sm text-gray-400">Terms of Service</span>
+          </div>
         </div>
 
         {/* Keterangan untuk tidak adanya link */}

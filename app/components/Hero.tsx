@@ -360,7 +360,7 @@ export default function Hero() {
               <h3 className="text-sm font-semibold text-black">
                 Butuh Bantuan?
               </h3>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-black">
                 Tim profesional kami siap membantu
               </p>
             </div>
@@ -396,7 +396,7 @@ export default function Hero() {
               <h3 className="text-sm md:text-xl text-black font-bold mb-1 md:mb-2">
                 Catatan Kesehatan
               </h3>
-              <p className="text-xs md:text-base text-gray-600 hidden md:block">
+              <p className="text-xs md:text-base text-black hidden md:block">
                 Akses catatan kesehatan anda kapan saja dimana saja. Pantau
                 riwayat kesehatan anda secara aman
               </p>
@@ -417,7 +417,7 @@ export default function Hero() {
               <h3 className="text-sm md:text-xl text-black font-bold mb-1 md:mb-2">
                 Dokter Ahli
               </h3>
-              <p className="text-xs md:text-base text-gray-600 hidden md:block">
+              <p className="text-xs md:text-base text-black hidden md:block">
                 Terhubung dengan spesialis berpengalaman dari berbagai bidang
                 medis untuk konsultasi berkualitas
               </p>
@@ -438,7 +438,7 @@ export default function Hero() {
               <h3 className="text-sm md:text-xl text-black font-bold mb-1 md:mb-2">
                 Penjadwalan
               </h3>
-              <p className="text-xs md:text-base text-gray-600 hidden md:block">
+              <p className="text-xs md:text-base text-black hidden md:block">
                 Buat dan kelola janji temu dengan mudah menggunakan sistem
                 penjadwalan yang mudah
               </p>
@@ -472,7 +472,7 @@ export default function Hero() {
                   <h3 className="text-md md:text-lg text-black font-semibold mb-1 md:mb-2">
                     Kalkulator BMI
                   </h3>
-                  <p className="text-xs md:text-base text-gray-600">
+                  <p className="text-xs md:text-base text-black">
                     Hitung indeks massa tubuh Anda
                   </p>
                 </div>
@@ -497,7 +497,7 @@ export default function Hero() {
                   <h3 className="text-md md:text-lg text-black font-semibold mb-1 md:mb-2">
                     Evaluasi Kesehatan Mental
                   </h3>
-                  <p className="text-xs md:text-base text-gray-600">
+                  <p className="text-xs md:text-base text-black">
                     Lakukan skrining awal kesehatan mental
                   </p>
                 </div>
@@ -524,7 +524,7 @@ export default function Hero() {
 
           {articlesLoading ? (
             <div className="flex justify-center py-8">
-              <p className="text-gray-500">Memuat artikel...</p>
+              <p className="text-black">Memuat artikel...</p>
             </div>
           ) : articles.length > 0 ? (
             <>
@@ -548,13 +548,13 @@ export default function Hero() {
                         />
                       </div>
                       <div className="p-4">
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-black">
                           {formatDate(article.publishedDate)}
                         </span>
                         <h3 className="text-md font-bold text-black mt-1 mb-2 line-clamp-2">
                           {article.title}
                         </h3>
-                        <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                        <p className="text-xs text-black mb-3 line-clamp-2">
                           {article.summary}
                         </p>
                         <Link
@@ -588,13 +588,13 @@ export default function Hero() {
                       />
                     </div>
                     <div className="p-5">
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-black">
                         {formatDate(article.publishedDate)}
                       </span>
                       <h3 className="text-xl font-bold text-black mt-2 mb-3 line-clamp-2">
                         {article.title}
                       </h3>
-                      <p className="text-base text-gray-600 mb-4 line-clamp-3">
+                      <p className="text-base text-black mb-4 line-clamp-3">
                         {article.summary}
                       </p>
                       <Link
@@ -626,11 +626,11 @@ export default function Hero() {
                       />
                     </div>
                     <div className="p-4">
-                      <span className="text-xs text-gray-500">12 Mei 2023</span>
+                      <span className="text-xs text-black">12 Mei 2023</span>
                       <h3 className="text-md font-bold text-black mt-1 mb-2">
                         10 Cara Menerapkan Pola Hidup Sehat
                       </h3>
-                      <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-xs text-black mb-3 line-clamp-2">
                         Menerapkan pola hidup sehat adalah kunci untuk menjaga
                         kesehatan fisik dan mental.
                       </p>
@@ -656,11 +656,11 @@ export default function Hero() {
                       />
                     </div>
                     <div className="p-4">
-                      <span className="text-xs text-gray-500">5 Juni 2023</span>
+                      <span className="text-xs text-black">5 Juni 2023</span>
                       <h3 className="text-md font-bold text-black mt-1 mb-2">
                         Pentingnya Menjaga Kesehatan Mental
                       </h3>
-                      <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-xs text-black mb-3 line-clamp-2">
                         Kesehatan mental sama pentingnya dengan kesehatan fisik.
                       </p>
                       <Link
@@ -685,13 +685,11 @@ export default function Hero() {
                       />
                     </div>
                     <div className="p-4">
-                      <span className="text-xs text-gray-500">
-                        20 Juli 2023
-                      </span>
+                      <span className="text-xs text-black">20 Juli 2023</span>
                       <h3 className="text-md font-bold text-black mt-1 mb-2">
                         Panduan Nutrisi Seimbang
                       </h3>
-                      <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+                      <p className="text-xs text-black mb-3 line-clamp-2">
                         Memahami kebutuhan nutrisi tubuh adalah langkah penting
                         menuju kesehatan yang optimal.
                       </p>
@@ -721,11 +719,11 @@ export default function Hero() {
                     />
                   </div>
                   <div className="p-5">
-                    <span className="text-xs text-gray-500">12 Mei 2023</span>
+                    <span className="text-xs text-black">12 Mei 2023</span>
                     <h3 className="text-xl font-bold text-black mt-2 mb-3">
                       10 Cara Menerapkan Pola Hidup Sehat
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-black mb-4 line-clamp-3">
                       Menerapkan pola hidup sehat adalah kunci untuk menjaga
                       kesehatan fisik dan mental. Artikel ini membahas
                       langkah-langkah sederhana yang dapat Anda terapkan dalam
@@ -753,11 +751,11 @@ export default function Hero() {
                     />
                   </div>
                   <div className="p-5">
-                    <span className="text-xs text-gray-500">5 Juni 2023</span>
+                    <span className="text-xs text-black">5 Juni 2023</span>
                     <h3 className="text-xl font-bold text-black mt-2 mb-3">
                       Pentingnya Menjaga Kesehatan Mental
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-black mb-4 line-clamp-3">
                       Kesehatan mental sama pentingnya dengan kesehatan fisik.
                       Pelajari bagaimana cara mengenali gejala stres dan
                       kecemasan, serta strategi untuk mengelolanya secara
@@ -785,11 +783,11 @@ export default function Hero() {
                     />
                   </div>
                   <div className="p-5">
-                    <span className="text-xs text-gray-500">20 Juli 2023</span>
+                    <span className="text-xs text-black">20 Juli 2023</span>
                     <h3 className="text-xl font-bold text-black mt-2 mb-3">
                       Panduan Nutrisi Seimbang untuk Kesehatan Optimal
                     </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
+                    <p className="text-black mb-4 line-clamp-3">
                       Memahami kebutuhan nutrisi tubuh adalah langkah penting
                       menuju kesehatan yang optimal. Artikel ini membahas
                       tentang macam-macam nutrisi penting dan cara
@@ -810,12 +808,12 @@ export default function Hero() {
       </div>
 
       {/* Testimonials Section - Simplified for mobile */}
-      <div className="py-8 md:py-12 bg-white">
+      <div className="pt-8 pb-20 md:py-12 bg-white">
         <div className="container mx-auto px-4">
           <h2 className="text-xl md:text-3xl text-black font-bold text-center mb-2 md:mb-4">
             Apa Kata Pasien Kami
           </h2>
-          <p className="text-center text-xs md:text-base text-gray-600 mb-6 md:mb-10 max-w-3xl mx-auto">
+          <p className="text-center text-xs md:text-base text-black mb-6 md:mb-10 max-w-3xl mx-auto">
             Jangan hanya percaya kata-kata kami. Ini yang dikatakan pasien kami
             tentang pengalaman mereka.
           </p>
@@ -825,8 +823,8 @@ export default function Hero() {
             <div className="flex space-x-4">
               <div className="bg-white p-4 rounded-lg shadow-md flex-shrink-0 w-[260px]">
                 <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
-                    <span className="text-gray-600 font-bold text-xs">M</span>
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mr-2">
+                    <span className="text-white font-bold text-xs">M</span>
                   </div>
                   <div>
                     <h4 className="text-sm text-black font-bold">
@@ -834,7 +832,7 @@ export default function Hero() {
                     </h4>
                   </div>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-black">
                   "Sistem pemesanan Janji Temu Online sangat nyaman. Saya bisa
                   mengatur kunjungan dengan cepat, dokternya teliti, dan penuh
                   perhatian"
@@ -843,8 +841,8 @@ export default function Hero() {
 
               <div className="bg-white p-4 rounded-lg shadow-md flex-shrink-0 w-[260px]">
                 <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
-                    <span className="text-gray-600 font-bold text-xs">S</span>
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mr-2">
+                    <span className="text-white font-bold text-xs">S</span>
                   </div>
                   <div>
                     <h4 className="text-sm text-black font-bold">
@@ -852,7 +850,7 @@ export default function Hero() {
                     </h4>
                   </div>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-black">
                   "Aplikasi ini sangat membantu. Saya bisa berkonsultasi dengan
                   dokter tanpa harus keluar rumah. Sangat praktis!"
                 </p>
@@ -860,14 +858,14 @@ export default function Hero() {
 
               <div className="bg-white p-4 rounded-lg shadow-md flex-shrink-0 w-[260px]">
                 <div className="flex items-center mb-3">
-                  <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center mr-2">
-                    <span className="text-gray-600 font-bold text-xs">D</span>
+                  <div className="w-8 h-8 bg-black rounded-full flex items-center justify-center mr-2">
+                    <span className="text-white font-bold text-xs">D</span>
                   </div>
                   <div>
                     <h4 className="text-sm text-black font-bold">David Lee</h4>
                   </div>
                 </div>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-black">
                   "Fitur kalkulator BMI sangat membantu saya memantau berat
                   badan. Interface aplikasi juga sangat mudah digunakan."
                 </p>
@@ -879,14 +877,14 @@ export default function Hero() {
           <div className="hidden md:grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-center mb-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-gray-600 font-bold">M</span>
+                <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white font-bold">M</span>
                 </div>
                 <div>
                   <h4 className="text-black font-bold">Michael Brown</h4>
                 </div>
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-black mb-4">
                 "Sistem pemesanan Janji Temu Online sangat nyaman. Saya bisa
                 mengatur kunjungan dengan cepat, dokternya teliti, dan penuh
                 perhatian"
@@ -895,14 +893,14 @@ export default function Hero() {
 
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-center mb-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-gray-600 font-bold">M</span>
+                <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white font-bold">M</span>
                 </div>
                 <div>
                   <h4 className="text-black font-bold">Michael Brown</h4>
                 </div>
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-black mb-4">
                 "Sistem pemesanan Janji Temu Online sangat nyaman. Saya bisa
                 mengatur kunjungan dengan cepat, dokternya teliti, dan penuh
                 perhatian"
@@ -911,14 +909,14 @@ export default function Hero() {
 
             <div className="bg-white p-6 rounded-lg shadow-md">
               <div className="flex items-center mb-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                  <span className="text-gray-600 font-bold">M</span>
+                <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center mr-3">
+                  <span className="text-white font-bold">M</span>
                 </div>
                 <div>
                   <h4 className="text-black font-bold">Michael Brown</h4>
                 </div>
               </div>
-              <p className="text-gray-600 mb-4">
+              <p className="text-black mb-4">
                 "Sistem pemesanan Janji Temu Online sangat nyaman. Saya bisa
                 mengatur kunjungan dengan cepat, dokternya teliti, dan penuh
                 perhatian"

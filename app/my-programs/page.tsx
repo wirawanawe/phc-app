@@ -431,23 +431,21 @@ export default function MyProgramsPage() {
       <div className="container mx-auto py-8 px-4 min-h-screen bg-white">
         <div className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Program Saya
-            </h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl font-bold text-black mb-2">Program Saya</h1>
+            <p className="text-black">
               Kelola program kesehatan yang sedang Anda ikuti
             </p>
           </div>
           <div className="flex space-x-3 mt-4 md:mt-0">
             <button
               onClick={refreshData}
-              className="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-800 rounded-md hover:bg-gray-200"
+              className="inline-flex items-center px-3 py-2 bg-gray-100 text-black rounded-md hover:bg-gray-200"
               disabled={loading}
             >
               {loading ? (
                 <span className="flex items-center">
                   <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-800"
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-black"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -498,21 +496,21 @@ export default function MyProgramsPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-6 p-4 bg-red-100 text-black rounded-md">
             {error}
           </div>
         )}
 
         {loading && enrolledPrograms.length === 0 ? (
           <div className="flex justify-center items-center h-64">
-            <div className="text-gray-500">Memuat program...</div>
+            <div className="text-black">Memuat program...</div>
           </div>
         ) : enrolledPrograms.length === 0 ? (
           <div className="bg-white rounded-lg shadow-md p-6 text-center">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            <h2 className="text-xl font-semibold text-black mb-2">
               Belum Ada Program yang Diikuti
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-black mb-6">
               Anda belum mengikuti program kesehatan apapun. Mulai dengan
               menjelajahi program yang tersedia.
             </p>
@@ -533,7 +531,7 @@ export default function MyProgramsPage() {
                 <div className="p-6">
                   <div className="flex flex-col md:flex-row justify-between mb-4">
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                      <h2 className="text-xl font-semibold text-black mb-2">
                         {program.name}
                       </h2>
                       <div className="flex flex-wrap gap-2 mb-2">
@@ -555,7 +553,7 @@ export default function MyProgramsPage() {
                           {formatStatus(program.status)}
                         </span>
                       </div>
-                      <p className="text-gray-600 text-sm mb-4">
+                      <p className="text-black text-sm mb-4">
                         {program.description}
                       </p>
                     </div>
@@ -591,11 +589,11 @@ export default function MyProgramsPage() {
 
                   <div className="mb-4">
                     <div className="flex justify-between mb-1">
-                      <span className="text-gray-700 text-sm">
+                      <span className="text-black text-sm">
                         Progress: {program.completedTasks}/{program.totalTasks}{" "}
                         tugas selesai
                       </span>
-                      <span className="text-gray-700 text-sm">
+                      <span className="text-black text-sm">
                         {program.progress}%
                       </span>
                     </div>
@@ -616,7 +614,7 @@ export default function MyProgramsPage() {
                         ? "Tutup Detail"
                         : "Lihat Detail"}
                     </button>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-black">
                       <span>
                         Mulai:{" "}
                         {new Date(program.startDate).toLocaleDateString(
@@ -644,7 +642,7 @@ export default function MyProgramsPage() {
                     className="border-t border-gray-200"
                   >
                     <div className="p-6 bg-gray-50">
-                      <h3 className="font-medium text-gray-800 mb-3">Tasks:</h3>
+                      <h3 className="font-medium text-black mb-3">Tasks:</h3>
                       <div className="space-y-3">
                         {program.tasks.map((task) => (
                           <div
@@ -657,15 +655,13 @@ export default function MyProgramsPage() {
                             <div className="flex-1">
                               <p
                                 className={`text-sm ${
-                                  task.completed
-                                    ? "text-gray-500"
-                                    : "text-gray-700"
+                                  task.completed ? "text-black" : "text-black"
                                 }`}
                               >
                                 {task.title}
                               </p>
                               {task.dueDate && (
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-black mt-1">
                                   Due: {task.dueDate}
                                 </p>
                               )}
@@ -698,7 +694,7 @@ export default function MyProgramsPage() {
                 {expandedProgram === program.id &&
                   program.tasks.length === 0 && (
                     <div className="p-4 bg-gray-50 border-t border-gray-200">
-                      <p className="text-gray-500 text-sm">
+                      <p className="text-black text-sm">
                         Belum ada tugas untuk program ini.
                       </p>
                     </div>

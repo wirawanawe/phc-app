@@ -78,6 +78,7 @@ export interface User {
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;
+  token?: string; // Token autentikasi JWT
 }
 
 export interface Spesialization {

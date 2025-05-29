@@ -140,7 +140,9 @@ export default function ArticlesAdminPage() {
       <Toaster position="top-right" />
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Manage Articles</h1>
+        <h1 className="text-2xl font-bold text-black bg-white">
+          Manage Articles
+        </h1>
         <Link
           href="/admin/articles/new"
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded"
@@ -156,7 +158,7 @@ export default function ArticlesAdminPage() {
             className={`px-4 py-2 rounded ${
               filter === "all"
                 ? "bg-blue-500 text-white"
-                : "bg-gray-200 text-gray-800"
+                : "bg-gray-200 text-black"
             }`}
           >
             All Articles
@@ -166,7 +168,7 @@ export default function ArticlesAdminPage() {
             className={`px-4 py-2 rounded ${
               filter === "published"
                 ? "bg-green-500 text-white"
-                : "bg-gray-200 text-gray-800"
+                : "bg-gray-200 text-black"
             }`}
           >
             Published
@@ -176,7 +178,7 @@ export default function ArticlesAdminPage() {
             className={`px-4 py-2 rounded ${
               filter === "draft"
                 ? "bg-yellow-500 text-white"
-                : "bg-gray-200 text-gray-800"
+                : "bg-gray-200 text-black"
             }`}
           >
             Drafts
@@ -186,7 +188,7 @@ export default function ArticlesAdminPage() {
 
       {loading ? (
         <div className="text-center py-10">
-          <p className="text-gray-500">Loading articles...</p>
+          <p className="text-black">Loading articles...</p>
         </div>
       ) : error ? (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -194,18 +196,20 @@ export default function ArticlesAdminPage() {
         </div>
       ) : articles.length === 0 ? (
         <div className="text-center py-10 bg-gray-50 rounded-lg">
-          <p className="text-gray-500">No articles found</p>
+          <p className="text-black">No articles found</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white rounded-lg overflow-hidden">
             <thead className="bg-gray-100">
               <tr>
-                <th className="py-3 px-4 text-left">Title</th>
-                <th className="py-3 px-4 text-left">Author</th>
-                <th className="py-3 px-4 text-left">Status</th>
-                <th className="py-3 px-4 text-left">Published Date</th>
-                <th className="py-3 px-4 text-left">Actions</th>
+                <th className="py-3 px-4 text-left text-black">Title</th>
+                <th className="py-3 px-4 text-left text-black">Author</th>
+                <th className="py-3 px-4 text-left text-black">Status</th>
+                <th className="py-3 px-4 text-left text-black">
+                  Published Date
+                </th>
+                <th className="py-3 px-4 text-left text-black">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
@@ -220,7 +224,7 @@ export default function ArticlesAdminPage() {
                             alt={article.title}
                             width={40}
                             height={40}
-                            className="object-cover"
+                            className="object-cover text-black"
                             onError={(e) => {
                               e.currentTarget.src = "/placeholder-image.jpg";
                             }}
@@ -228,15 +232,17 @@ export default function ArticlesAdminPage() {
                         </div>
                       )}
                       <div>
-                        <p className="font-medium">{article.title}</p>
-                        <p className="text-xs text-gray-500 truncate max-w-xs">
+                        <p className="font-medium text-black">
+                          {article.title}
+                        </p>
+                        <p className="text-xs text-black truncate max-w-xs">
                           {article.summary.substring(0, 80)}...
                         </p>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4">{article.author}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 text-black">{article.author}</td>
+                  <td className="py-3 px-4 text-black">
                     <span
                       className={`px-2 py-1 rounded text-xs font-medium ${
                         article.isPublished
@@ -247,10 +253,10 @@ export default function ArticlesAdminPage() {
                       {article.isPublished ? "Published" : "Draft"}
                     </span>
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 text-black">
                     {formatDate(article.publishedDate)}
                   </td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 text-black">
                     <div className="flex space-x-2">
                       <button
                         onClick={() => togglePublishStatus(article)}

@@ -29,12 +29,19 @@ const HealthProgramForm: React.FC<HealthProgramFormProps> = ({
 
   useEffect(() => {
     if (program) {
+      // Format dates to YYYY-MM-DD for the date inputs
+      const formatDate = (dateString: string | undefined) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0];
+      };
+
       setFormData({
         name: program.name || "",
         description: program.description || "",
         categoryId: program.categoryId || "",
-        startDate: program.startDate || "",
-        endDate: program.endDate || "",
+        startDate: formatDate(program.startDate),
+        endDate: formatDate(program.endDate),
         location: program.location || "",
         maxParticipants: program.maxParticipants?.toString() || "",
         status: program.status || "active",

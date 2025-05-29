@@ -61,10 +61,10 @@ export default function ArticlesPage() {
 
         <div className="mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl font-bold text-black mb-2">
               Artikel Kesehatan
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-black">
               Temukan informasi terbaru seputar kesehatan dan gaya hidup sehat
             </p>
           </div>
@@ -72,11 +72,11 @@ export default function ArticlesPage() {
           {loading ? (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#E32345] border-t-transparent"></div>
-              <p className="mt-4 text-gray-500">Memuat artikel...</p>
+              <p className="mt-4 text-black">Memuat artikel...</p>
             </div>
           ) : articles.length === 0 ? (
             <div className="text-center py-8 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-500">Tidak ada artikel</p>
+              <p className="text-black">Tidak ada artikel</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -103,17 +103,17 @@ export default function ArticlesPage() {
                     )}
 
                     <div className="p-4 flex-grow">
-                      <h2 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+                      <h2 className="text-lg font-semibold text-black mb-2 line-clamp-2">
                         {article.title}
                       </h2>
-                      <div className="flex items-center text-xs text-gray-500 mb-2">
+                      <div className="flex items-center text-xs text-black mb-2">
                         <span className="mr-2">Oleh {article.author}</span>
                         <span>•</span>
                         <span className="ml-2">
                           {formatDate(article.publishedDate)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 line-clamp-2">
+                      <p className="text-sm text-black line-clamp-2">
                         {article.summary}
                       </p>
                       <div className="mt-3">

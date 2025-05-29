@@ -226,7 +226,7 @@ export default function ProgramCategoriesPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-black">
+        <h1 className="text-3xl font-bold text-black bg-white">
           Program Categories Management
         </h1>
         <button
@@ -254,19 +254,19 @@ export default function ProgramCategoriesPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Description
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Color
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -274,7 +274,7 @@ export default function ProgramCategoriesPage() {
           <tbody className="bg-white divide-y divide-gray-200">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-4 text-center text-black">
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
                   </div>
@@ -282,7 +282,7 @@ export default function ProgramCategoriesPage() {
               </tr>
             ) : categories.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-4 text-center text-black">
                   No categories found
                 </td>
               </tr>
@@ -290,12 +290,12 @@ export default function ProgramCategoriesPage() {
               categories.map((category) => (
                 <tr key={category.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-black">
                       {category.name}
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-500 line-clamp-2">
+                    <div className="text-sm text-black line-clamp-2">
                       {category.description || "-"}
                     </div>
                   </td>
@@ -304,7 +304,7 @@ export default function ProgramCategoriesPage() {
                       <div
                         className={`w-4 h-4 rounded-full bg-${category.color}-500 mr-2`}
                       ></div>
-                      <span className="text-sm text-gray-500 capitalize">
+                      <span className="text-sm text-black capitalize">
                         {category.color}
                       </span>
                     </div>
@@ -368,7 +368,7 @@ export default function ProgramCategoriesPage() {
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
                 <label
-                  className="block text-sm font-medium text-gray-700 mb-1"
+                  className="block text-sm font-medium text-black mb-1"
                   htmlFor="name"
                 >
                   Name <span className="text-red-500">*</span>
@@ -432,7 +432,7 @@ export default function ProgramCategoriesPage() {
               </div>
 
               <div className="mb-4">
-                <label className="flex items-center text-sm font-medium text-gray-700">
+                <label className="flex items-center text-sm font-medium text-black">
                   <input
                     type="checkbox"
                     id="isActive"
@@ -452,7 +452,7 @@ export default function ProgramCategoriesPage() {
                     setIsFormOpen(false);
                     resetForm();
                   }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
+                  className="px-4 py-2 border border-gray-300 rounded-md text-black hover:bg-gray-100"
                 >
                   Cancel
                 </button>

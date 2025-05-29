@@ -45,7 +45,8 @@ export function generateToken(
   payload: Omit<TokenPayload, "iat" | "exp">
 ): string {
   console.log("Generating token for user:", payload.userId);
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: "30m" });
+  // Set token expiration to 24 hours
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: "24h" });
 }
 
 export function getUserIdFromToken(token: string): string | null {

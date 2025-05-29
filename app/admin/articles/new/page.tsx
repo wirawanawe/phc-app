@@ -257,7 +257,9 @@ export default function NewArticlePage() {
       <Toaster position="top-right" />
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Add New Article</h1>
+        <h1 className="text-2xl font-bold text-black bg-white">
+          Add New Article
+        </h1>
         <Link
           href="/admin/articles"
           className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded"
@@ -271,7 +273,7 @@ export default function NewArticlePage() {
           <div className="mb-4">
             <label
               htmlFor="title"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-black mb-1"
             >
               Title *
             </label>
@@ -281,7 +283,7 @@ export default function NewArticlePage() {
               name="title"
               value={formData.title}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
@@ -289,7 +291,7 @@ export default function NewArticlePage() {
           <div className="mb-4">
             <label
               htmlFor="author"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-black mb-1"
             >
               Author *
             </label>
@@ -299,7 +301,7 @@ export default function NewArticlePage() {
               name="author"
               value={formData.author}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
@@ -307,7 +309,7 @@ export default function NewArticlePage() {
           <div className="mb-4">
             <label
               htmlFor="summary"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-black mb-1"
             >
               Summary *
             </label>
@@ -317,7 +319,7 @@ export default function NewArticlePage() {
               value={formData.summary}
               onChange={handleChange}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -328,7 +330,7 @@ export default function NewArticlePage() {
           <div className="mb-4">
             <label
               htmlFor="content"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-black mb-1"
             >
               Content *
             </label>
@@ -338,7 +340,7 @@ export default function NewArticlePage() {
               value={formData.content}
               onChange={handleChange}
               rows={10}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
               required
             />
           </div>
@@ -346,7 +348,7 @@ export default function NewArticlePage() {
           <div className="mb-6">
             <label
               htmlFor="image"
-              className="block text-sm font-medium text-gray-700 mb-2"
+              className="block text-sm font-medium text-black mb-2"
             >
               Featured Image
             </label>
@@ -368,9 +370,7 @@ export default function NewArticlePage() {
                     }}
                   />
                 ) : (
-                  <div className="text-gray-400 text-sm text-center">
-                    No image
-                  </div>
+                  <div className="text-black text-sm text-center">No image</div>
                 )}
               </div>
               <div className="flex-1">
@@ -386,11 +386,11 @@ export default function NewArticlePage() {
                     file:bg-blue-50 file:text-blue-700
                     hover:file:bg-blue-100"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-black">
                   Recommended size: 1200x630px. Max file size: 5MB.
                 </p>
                 {formData.imageUrl && !imagePreview && (
-                  <p className="mt-2 text-xs text-gray-500">
+                  <p className="mt-2 text-xs text-black">
                     Current URL: {formData.imageUrl}
                   </p>
                 )}
@@ -410,12 +410,12 @@ export default function NewArticlePage() {
               />
               <label
                 htmlFor="isPublished"
-                className="ml-2 block text-sm text-gray-700"
+                className="ml-2 block text-sm text-black"
               >
                 Publish immediately
               </label>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-black mt-1">
               If unchecked, the article will be saved as a draft
             </p>
           </div>
@@ -424,7 +424,7 @@ export default function NewArticlePage() {
             <button
               type="button"
               onClick={() => router.push("/admin/articles")}
-              className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded mr-2"
+              className="bg-gray-300 hover:bg-gray-400 text-black px-4 py-2 rounded mr-2"
               disabled={loading}
             >
               Cancel

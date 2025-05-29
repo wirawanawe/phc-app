@@ -67,7 +67,7 @@ export default function MentalHealthPage() {
             <h1 className="text-3xl md:text-4xl text-black font-bold mb-4">
               Evaluasi Kesehatan Mental
             </h1>
-            <p className="text-lg text-gray-700 max-w-3xl mx-auto">
+            <p className="text-lg text-black max-w-3xl mx-auto">
               Skrining awal menggunakan kuesioner PHQ-9 untuk menilai gejala
               depresi
             </p>
@@ -79,7 +79,7 @@ export default function MentalHealthPage() {
                 <li className="inline-flex items-center">
                   <Link
                     href="/"
-                    className="inline-flex items-center text-sm font-medium text-gray-700 hover:text-primary"
+                    className="inline-flex items-center text-sm font-medium text-black hover:text-primary"
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -95,7 +95,7 @@ export default function MentalHealthPage() {
                 <li aria-current="page">
                   <div className="flex items-center">
                     <svg
-                      className="w-6 h-6 text-gray-400"
+                      className="w-6 h-6 text-black"
                       fill="currentColor"
                       viewBox="0 0 20 20"
                       xmlns="http://www.w3.org/2000/svg"
@@ -106,7 +106,7 @@ export default function MentalHealthPage() {
                         clipRule="evenodd"
                       ></path>
                     </svg>
-                    <span className="ml-1 text-sm font-medium text-gray-500 md:ml-2">
+                    <span className="ml-1 text-sm font-medium text-black md:ml-2">
                       Evaluasi Kesehatan Mental
                     </span>
                   </div>
@@ -117,7 +117,7 @@ export default function MentalHealthPage() {
 
           <div className="max-w-3xl mx-auto">
             <div className="bg-white rounded-lg shadow-lg p-6 border border-gray-200">
-              <p className="text-gray-700 mb-6">
+              <p className="text-black mb-6">
                 PHQ-9 adalah kuesioner standar untuk mengevaluasi tingkat
                 depresi. Jawablah seberapa sering Anda mengalami gejala berikut
                 dalam 2 minggu terakhir.
@@ -136,7 +136,7 @@ export default function MentalHealthPage() {
                   "Memikirkan bahwa Anda lebih baik mati atau ingin melukai diri sendiri dengan cara apapun",
                 ].map((question, index) => (
                   <div key={index}>
-                    <p className="text-sm font-medium text-gray-700 mb-2">
+                    <p className="text-sm font-medium text-black mb-2">
                       {index + 1}. {question}
                     </p>
                     <div className="flex flex-wrap gap-3 text-black">
@@ -172,7 +172,7 @@ export default function MentalHealthPage() {
                   </button>
                   <button
                     onClick={resetPHQ9}
-                    className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
+                    className="flex-1 bg-gray-200 text-black py-2 px-4 rounded-md hover:bg-gray-300 transition-colors"
                   >
                     Reset
                   </button>
@@ -180,7 +180,7 @@ export default function MentalHealthPage() {
 
                 {phqScore !== null && (
                   <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                    <h4 className="text-xl font-bold text-gray-900 mb-3">
+                    <h4 className="text-xl font-bold text-black mb-3">
                       Hasil PHQ-9
                     </h4>
                     <p className="text-lg font-semibold mb-2 text-black">
@@ -205,7 +205,7 @@ export default function MentalHealthPage() {
                     )}
 
                     <div className="mt-4 pt-3 border-t border-gray-200">
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-black">
                         Hasil ini tidak menggantikan diagnosa profesional
                         kesehatan mental. Jika Anda mengalami pikiran untuk
                         menyakiti diri sendiri atau bunuh diri, segera hubungi

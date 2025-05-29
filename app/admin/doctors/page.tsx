@@ -313,7 +313,7 @@ export default function DoctorsPage() {
             </h2>
             <form onSubmit={handleAddEdit}>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="name">
+                <label className="block text-black mb-2" htmlFor="name">
                   Name
                 </label>
                 <input
@@ -328,7 +328,7 @@ export default function DoctorsPage() {
               </div>
               <div className="mb-4">
                 <label
-                  className="block text-gray-700 mb-2"
+                  className="block text-black mb-2"
                   htmlFor="spesialisasiId"
                 >
                   Specialization
@@ -350,7 +350,7 @@ export default function DoctorsPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="email">
+                <label className="block text-black mb-2" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -363,7 +363,7 @@ export default function DoctorsPage() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="phone">
+                <label className="block text-black mb-2" htmlFor="phone">
                   Phone
                 </label>
                 <input
@@ -378,7 +378,7 @@ export default function DoctorsPage() {
 
               {/* Schedule Section */}
               <div className="mb-6">
-                <label className="block text-gray-700 mb-2">Hari Praktik</label>
+                <label className="block text-black mb-2">Hari Praktik</label>
                 <div className="bg-gray-50 p-3 rounded border border-gray-200">
                   <div className="grid grid-cols-3 gap-x-3 gap-y-2">
                     {days.map((day) => (
@@ -392,7 +392,7 @@ export default function DoctorsPage() {
                           }
                           className="border border-gray-300 rounded"
                         />
-                        <label htmlFor={`day-${day}`} className="text-gray-700">
+                        <label htmlFor={`day-${day}`} className="text-black">
                           {day}
                         </label>
                       </div>
@@ -405,7 +405,7 @@ export default function DoctorsPage() {
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+                  className="px-4 py-2 border border-gray-300 rounded text-black hover:bg-gray-100"
                 >
                   Cancel
                 </button>
@@ -426,22 +426,22 @@ export default function DoctorsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Specialization
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Phone
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Schedule
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -455,7 +455,7 @@ export default function DoctorsPage() {
               </tr>
             ) : doctors.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-black">
                   No doctors found. Add a new doctor to get started.
                 </td>
               </tr>

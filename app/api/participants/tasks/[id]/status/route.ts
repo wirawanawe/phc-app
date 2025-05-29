@@ -4,6 +4,9 @@ import { sequelize } from "@/app/models";
 import { QueryTypes } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
 
+// Force dynamic rendering for this route
+export const dynamic = "force-dynamic";
+
 interface RequestBody {
   status: "active" | "completed";
 }

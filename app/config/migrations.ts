@@ -1,4 +1,5 @@
 import { sequelize } from "../models";
+import { QueryTypes } from "sequelize";
 
 export const runMigrations = async () => {
   try {
@@ -373,156 +374,195 @@ async function migrateWebsiteSettingsSocialMedia() {
 // Migration: Fix enrollment-related issues
 async function fixEnrollmentIssues() {
   try {
-    // Add triggers to sync program and enrollment status
-    await sequelize.query(
-      `DROP TRIGGER IF EXISTS sync_program_status_to_enrollments;`
-    );
+    // Check if triggers already exist before creating them
+    const checkTriggerExists = async (
+      triggerName: string
+    ): Promise<boolean> => {
+      try {
+        const [result] = await sequelize.query(
+          `SELECT TRIGGER_NAME FROM information_schema.TRIGGERS 
+           WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = ?`,
+          {
+            replacements: [triggerName],
+            type: QueryTypes.SELECT,
+          }
+        );
+        return result !== undefined;
+      } catch (error) {
+        return false;
+      }
+    };
 
-    await sequelize.query(`
-      CREATE TRIGGER sync_program_status_to_enrollments
-      AFTER UPDATE ON health_programs
-      FOR EACH ROW
-      BEGIN
-        IF NEW.status != OLD.status THEN
-          UPDATE participant_enrollments
-          SET status = NEW.status
-          WHERE healthProgramId = NEW.id AND status = 'active';
-        END IF;
-      END;
-    `);
+    // Add triggers to sync program and enrollment status
+    const trigger1Exists = await checkTriggerExists(
+      "sync_program_status_to_enrollments"
+    );
+    if (!trigger1Exists) {
+      await sequelize.query(
+        `DROP TRIGGER IF EXISTS sync_program_status_to_enrollments;`
+      );
+
+      await sequelize.query(`
+        CREATE TRIGGER sync_program_status_to_enrollments
+        AFTER UPDATE ON health_programs
+        FOR EACH ROW
+        BEGIN
+          IF NEW.status != OLD.status THEN
+            UPDATE participant_enrollments
+            SET status = NEW.status
+            WHERE healthProgramId = NEW.id AND status = 'active';
+          END IF;
+        END;
+      `);
+    }
 
     // Add trigger to automatically update enrollment status based on program dates
-    await sequelize.query(
-      `DROP TRIGGER IF EXISTS update_enrollment_status_on_program_dates;`
+    const trigger2Exists = await checkTriggerExists(
+      "update_enrollment_status_on_program_dates"
     );
+    if (!trigger2Exists) {
+      await sequelize.query(
+        `DROP TRIGGER IF EXISTS update_enrollment_status_on_program_dates;`
+      );
 
-    await sequelize.query(`
-      CREATE TRIGGER update_enrollment_status_on_program_dates
-      AFTER UPDATE ON health_programs
-      FOR EACH ROW
-      BEGIN
-        -- If program end date is reached, mark all active enrollments as completed
-        IF NEW.endDate IS NOT NULL AND NEW.endDate < CURDATE() THEN
-          UPDATE participant_enrollments
-          SET status = 'completed', completionDate = NOW()
-          WHERE healthProgramId = NEW.id AND status = 'active';
-        END IF;
-        
-        -- If program is not active, mark all active enrollments as inactive
-        IF NEW.status != 'active' THEN
-          UPDATE participant_enrollments
-          SET status = NEW.status
-          WHERE healthProgramId = NEW.id AND status = 'active';
-        END IF;
-      END;
-    `);
+      await sequelize.query(`
+        CREATE TRIGGER update_enrollment_status_on_program_dates
+        AFTER UPDATE ON health_programs
+        FOR EACH ROW
+        BEGIN
+          -- If program end date is reached, mark all active enrollments as completed
+          IF NEW.endDate IS NOT NULL AND NEW.endDate < CURDATE() THEN
+            UPDATE participant_enrollments
+            SET status = 'completed', completionDate = NOW()
+            WHERE healthProgramId = NEW.id AND status = 'active';
+          END IF;
+          
+          -- If program is not active, mark all active enrollments as inactive
+          IF NEW.status != 'active' THEN
+            UPDATE participant_enrollments
+            SET status = NEW.status
+            WHERE healthProgramId = NEW.id AND status = 'active';
+          END IF;
+        END;
+      `);
+    }
 
     // Add validation for program dates
-    await sequelize.query(`DROP TRIGGER IF EXISTS validate_program_dates;`);
+    const trigger3Exists = await checkTriggerExists("validate_program_dates");
+    if (!trigger3Exists) {
+      await sequelize.query(`DROP TRIGGER IF EXISTS validate_program_dates;`);
 
-    await sequelize.query(`
-      CREATE TRIGGER validate_program_dates
-      BEFORE INSERT ON participant_enrollments
-      FOR EACH ROW
-      BEGIN
-        DECLARE program_start_date DATE;
-        DECLARE program_end_date DATE;
-        DECLARE program_status VARCHAR(20);
-        
-        SELECT startDate, endDate, status INTO program_start_date, program_end_date, program_status
-        FROM health_programs
-        WHERE id = NEW.healthProgramId;
-        
-        IF program_status != 'active' THEN
-          SIGNAL SQLSTATE '45000'
-          SET MESSAGE_TEXT = 'Cannot enroll in an inactive program';
-        END IF;
-        
-        IF program_start_date > CURDATE() THEN
-          SIGNAL SQLSTATE '45000'
-          SET MESSAGE_TEXT = 'Cannot enroll in a program that has not started yet';
-        END IF;
-        
-        IF program_end_date IS NOT NULL AND program_end_date < CURDATE() THEN
-          SIGNAL SQLSTATE '45000'
-          SET MESSAGE_TEXT = 'Cannot enroll in a program that has ended';
-        END IF;
-      END;
-    `);
+      await sequelize.query(`
+        CREATE TRIGGER validate_program_dates
+        BEFORE INSERT ON participant_enrollments
+        FOR EACH ROW
+        BEGIN
+          DECLARE program_start_date DATE;
+          DECLARE program_end_date DATE;
+          DECLARE program_status VARCHAR(20);
+          
+          SELECT startDate, endDate, status INTO program_start_date, program_end_date, program_status
+          FROM health_programs
+          WHERE id = NEW.healthProgramId;
+          
+          IF program_status != 'active' THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Cannot enroll in an inactive program';
+          END IF;
+          
+          IF program_end_date IS NOT NULL AND program_end_date < CURDATE() THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Cannot enroll in a program that has ended';
+          END IF;
+        END;
+      `);
+    }
 
     // Add validation for maximum participants
-    await sequelize.query(`DROP TRIGGER IF EXISTS validate_max_participants;`);
+    const trigger4Exists = await checkTriggerExists(
+      "validate_max_participants"
+    );
+    if (!trigger4Exists) {
+      await sequelize.query(
+        `DROP TRIGGER IF EXISTS validate_max_participants;`
+      );
 
-    await sequelize.query(`
-      CREATE TRIGGER validate_max_participants
-      BEFORE INSERT ON participant_enrollments
-      FOR EACH ROW
-      BEGIN
-        DECLARE max_participants INT;
-        DECLARE current_participants INT;
-        
-        SELECT maxParticipants INTO max_participants
-        FROM health_programs
-        WHERE id = NEW.healthProgramId;
-        
-        IF max_participants IS NOT NULL THEN
-          SELECT COUNT(*) INTO current_participants
-          FROM participant_enrollments
-          WHERE healthProgramId = NEW.healthProgramId AND status = 'active';
+      await sequelize.query(`
+        CREATE TRIGGER validate_max_participants
+        BEFORE INSERT ON participant_enrollments
+        FOR EACH ROW
+        BEGIN
+          DECLARE max_participants INT;
+          DECLARE current_participants INT;
           
-          IF current_participants >= max_participants THEN
-            SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Program has reached maximum number of participants';
+          SELECT maxParticipants INTO max_participants
+          FROM health_programs
+          WHERE id = NEW.healthProgramId;
+          
+          IF max_participants IS NOT NULL THEN
+            SELECT COUNT(*) INTO current_participants
+            FROM participant_enrollments
+            WHERE healthProgramId = NEW.healthProgramId AND status = 'active';
+            
+            IF current_participants >= max_participants THEN
+              SIGNAL SQLSTATE '45000'
+              SET MESSAGE_TEXT = 'Program has reached maximum number of participants';
+            END IF;
           END IF;
-        END IF;
-      END;
-    `);
+        END;
+      `);
+    }
 
     // Add trigger to complete enrollments when all tasks are completed
-    await sequelize.query(
-      `DROP TRIGGER IF EXISTS complete_enrollment_on_all_tasks_completed;`
+    const trigger5Exists = await checkTriggerExists(
+      "complete_enrollment_on_all_tasks_completed"
     );
+    if (!trigger5Exists) {
+      await sequelize.query(
+        `DROP TRIGGER IF EXISTS complete_enrollment_on_all_tasks_completed;`
+      );
 
-    await sequelize.query(`
-      CREATE TRIGGER complete_enrollment_on_all_tasks_completed
-      AFTER UPDATE ON participant_tasks
-      FOR EACH ROW
-      BEGIN
-        DECLARE total_tasks INT;
-        DECLARE completed_tasks INT;
-        DECLARE program_id VARCHAR(36);
-        DECLARE participant_id VARCHAR(36);
-        
-        -- Get the program ID and participant ID
-        SELECT t.healthProgramId, pt.participantId INTO program_id, participant_id
-        FROM tasks t
-        JOIN participant_tasks pt ON t.id = pt.taskId
-        WHERE pt.id = NEW.id;
-        
-        -- Count total tasks and completed tasks
-        SELECT 
-          COUNT(*) INTO total_tasks
-        FROM tasks t
-        WHERE t.healthProgramId = program_id;
-        
-        SELECT 
-          COUNT(*) INTO completed_tasks
-        FROM tasks t
-        JOIN participant_tasks pt ON t.id = pt.taskId
-        WHERE t.healthProgramId = program_id 
-        AND pt.participantId = participant_id
-        AND pt.status = 'completed';
-        
-        -- If all tasks are completed, update enrollment status
-        IF total_tasks > 0 AND completed_tasks = total_tasks THEN
-          UPDATE participant_enrollments
-          SET status = 'completed', completionDate = NOW()
-          WHERE participantId = participant_id 
-          AND healthProgramId = program_id 
-          AND status = 'active';
-        END IF;
-      END;
-    `);
+      await sequelize.query(`
+        CREATE TRIGGER complete_enrollment_on_all_tasks_completed
+        AFTER UPDATE ON participant_tasks
+        FOR EACH ROW
+        BEGIN
+          DECLARE total_tasks INT;
+          DECLARE completed_tasks INT;
+          DECLARE program_id VARCHAR(36);
+          DECLARE participant_id VARCHAR(36);
+          
+          -- Get the program ID and participant ID
+          SELECT t.healthProgramId, pt.participantId INTO program_id, participant_id
+          FROM tasks t
+          JOIN participant_tasks pt ON t.id = pt.taskId
+          WHERE pt.id = NEW.id;
+          
+          -- Count total tasks and completed tasks
+          SELECT 
+            COUNT(*) INTO total_tasks
+          FROM tasks t
+          WHERE t.healthProgramId = program_id;
+          
+          SELECT 
+            COUNT(*) INTO completed_tasks
+          FROM tasks t
+          JOIN participant_tasks pt ON t.id = pt.taskId
+          WHERE t.healthProgramId = program_id 
+          AND pt.participantId = participant_id
+          AND pt.status = 'completed';
+          
+          -- If all tasks are completed, update enrollment status
+          IF total_tasks > 0 AND completed_tasks = total_tasks THEN
+            UPDATE participant_enrollments
+            SET status = 'completed', completionDate = NOW()
+            WHERE participantId = participant_id 
+            AND healthProgramId = program_id 
+            AND status = 'active';
+          END IF;
+        END;
+      `);
+    }
 
     console.log("Migration: Fixed enrollment-related issues");
   } catch (error) {

@@ -8,6 +8,8 @@ import React, {
   ReactNode,
 } from "react";
 import { User } from "@/app/types";
+import { useRouter } from "next/navigation";
+import SessionExpiredModal from "@/app/components/SessionExpiredModal";
 
 interface AuthContextType {
   user: User | null;
@@ -15,6 +17,7 @@ interface AuthContextType {
   login: (emailOrUsername: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   updateUserRole: (newRole: string) => Promise<void>;
+  updateUser: (userData: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,6 +25,66 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [sessionModalOpen, setSessionModalOpen] = useState(false);
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState("");
+
+  // Check session status periodically
+  useEffect(() => {
+    // Define session check function
+    const checkSession = async () => {
+      // Only check if user is logged in
+      if (!user) return;
+
+      try {
+        // Make a request to a protected endpoint to verify session
+        const response = await fetch("/api/auth/check-session", {
+          method: "GET",
+          credentials: "include", // Include cookies
+        });
+
+        // If session is invalid, show modal and logout the user
+        if (!response.ok) {
+          console.log("AUTH: Session expired or invalid");
+
+          try {
+            const data = await response.json();
+            if (data && data.error) {
+              setSessionExpiredMessage(data.error);
+            } else {
+              setSessionExpiredMessage(
+                "Sesi login Anda telah berakhir. Harap login kembali untuk melanjutkan."
+              );
+            }
+          } catch (e) {
+            setSessionExpiredMessage(
+              "Sesi login Anda telah berakhir. Harap login kembali untuk melanjutkan."
+            );
+          }
+
+          // Show session expired modal
+          setSessionModalOpen(true);
+        }
+      } catch (error) {
+        console.error("AUTH: Error checking session:", error);
+      }
+    };
+
+    // Check immediately when component mounts
+    checkSession();
+
+    // Set up interval for session checks
+    const interval = setInterval(checkSession, 1000 * 60 * 5); // Check every 5 minutes
+
+    // Clear interval on cleanup
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Handle closing the session modal
+  const handleCloseSessionModal = async () => {
+    setSessionModalOpen(false);
+    await logout();
+  };
 
   // Load user from localStorage on startup
   useEffect(() => {
@@ -237,10 +300,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Fungsi untuk update keseluruhan data user (untuk refresh token)
+  const updateUser = (userData: User): void => {
+    console.log("AUTH: Updating user data after token refresh");
+
+    if (!userData || !userData.id) {
+      console.error("AUTH: Invalid user data provided for update");
+      return;
+    }
+
+    try {
+      // Simpan token dari user lama jika ada dan tidak ada di user data baru
+      if (user?.token && !userData.token) {
+        userData.token = user.token;
+      }
+
+      // Update state
+      setUser(userData);
+
+      // Update localStorage
+      localStorage.setItem("phc_user", JSON.stringify(userData));
+      console.log("AUTH: User data updated successfully after token refresh");
+    } catch (error) {
+      console.error("AUTH: Error updating user data:", error);
+    }
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, login, logout, updateUserRole }}
+      value={{ user, loading, login, logout, updateUserRole, updateUser }}
     >
+      <SessionExpiredModal
+        isOpen={sessionModalOpen}
+        message={sessionExpiredMessage}
+        onClose={handleCloseSessionModal}
+      />
       {children}
     </AuthContext.Provider>
   );

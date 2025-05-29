@@ -299,7 +299,7 @@ export default function ProgramDetailPage() {
       <>
         <Navbar />
         <div className="container mx-auto py-8 px-4 min-h-screen bg-gray-50">
-          <div className="bg-red-100 text-red-700 p-4 rounded-md mb-4">
+          <div className="bg-red-100 text-black p-4 rounded-md mb-4">
             {error}
           </div>
           <Link
@@ -319,7 +319,7 @@ export default function ProgramDetailPage() {
       <>
         <Navbar />
         <div className="container mx-auto py-8 px-4 min-h-screen bg-gray-50">
-          <div className="bg-yellow-100 text-yellow-700 p-4 rounded-md mb-4">
+          <div className="bg-yellow-100 text-black p-4 rounded-md mb-4">
             Program tidak ditemukan
           </div>
           <Link
@@ -350,7 +350,7 @@ export default function ProgramDetailPage() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="mb-6 p-4 bg-red-100 text-black rounded-md">
             {error}
           </div>
         )}
@@ -359,7 +359,7 @@ export default function ProgramDetailPage() {
           <div className="p-6">
             <div className="flex flex-col md:flex-row justify-between mb-6">
               <div className="mb-4 md:mb-0">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                <h1 className="text-2xl font-bold text-black mb-2">
                   {program.name}
                 </h1>
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -379,8 +379,8 @@ export default function ProgramDetailPage() {
                     {formatStatus(program.status)}
                   </span>
                 </div>
-                <p className="text-gray-600 mb-3">{program.description}</p>
-                <div className="text-sm text-gray-500">
+                <p className="text-black mb-3">{program.description}</p>
+                <div className="text-sm text-black">
                   <div>
                     Tanggal Mulai:{" "}
                     {new Date(program.startDate).toLocaleDateString("id-ID")}
@@ -394,27 +394,29 @@ export default function ProgramDetailPage() {
                 </div>
               </div>
 
-              {program.status !== "completed" && (
-                <button
-                  onClick={handleCompleteProgram}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  Selesaikan Program
-                </button>
-              )}
+              <div className="flex flex-col gap-2 mt-4 md:mt-0">
+                {program.status !== "completed" && (
+                  <button
+                    onClick={handleCompleteProgram}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                  >
+                    Selesaikan Program
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Progress section */}
             <div className="mb-6">
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              <h2 className="text-lg font-semibold text-black mb-3">
                 Progress Program
               </h2>
               <div className="flex justify-between mb-1">
-                <span className="text-gray-700">
+                <span className="text-black">
                   {program.completedTasks} dari {program.totalTasks} tugas
                   selesai
                 </span>
-                <span className="text-gray-700">{program.progress}%</span>
+                <span className="text-black">{program.progress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
@@ -426,101 +428,95 @@ export default function ProgramDetailPage() {
 
             {/* Tasks section */}
             <div className="mt-8">
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+              <h2 className="text-lg font-semibold text-black mb-3">
                 Daftar Tugas
               </h2>
 
               {program.tasks.length === 0 ? (
-                <p className="text-gray-500">
-                  Belum ada tugas untuk program ini.
-                </p>
+                <p className="text-black">Belum ada tugas untuk program ini.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 border">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tugas
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Prioritas
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Jam Pelaksanaan
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Tindakan
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {program.tasks.map((task) => (
-                        <tr key={task.id}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">
+                <div className="space-y-4">
+                  {program.tasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden"
+                    >
+                      <div className="p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="text-base font-medium text-black mb-1">
                               {task.title}
-                            </div>
-                            <div className="text-sm text-gray-500 max-w-md truncate">
+                            </h3>
+                            <p className="text-sm text-black mb-2">
                               {task.description}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityBadgeColor(
-                                task.priority
-                              )}`}
+                            </p>
+                          </div>
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getPriorityBadgeColor(
+                              task.priority
+                            )}`}
+                          >
+                            {formatPriority(task.priority)}
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                          <div className="flex items-center text-black">
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
                             >
-                              {formatPriority(task.priority)}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
                             {task.timePerformed || "-"}
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <span
-                              className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                task.status === "completed"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {task.status === "completed"
-                                ? "Selesai"
-                                : "Belum Selesai"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {program.status !== "completed" &&
-                              (task.status === "completed" ? (
-                                <button
-                                  onClick={() =>
-                                    handleTaskStatusChange(
-                                      task.id,
-                                      "reactivate"
-                                    )
-                                  }
-                                  className="text-blue-600 hover:text-blue-900"
-                                >
-                                  Aktifkan Kembali
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() =>
-                                    handleTaskStatusChange(task.id, "complete")
-                                  }
-                                  className="text-green-600 hover:text-green-900"
-                                >
-                                  Selesaikan
-                                </button>
-                              ))}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                          </div>
+                          <span
+                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                              task.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {task.status === "completed"
+                              ? "Selesai"
+                              : "Belum Selesai"}
+                          </span>
+                        </div>
+
+                        {program.status !== "completed" && (
+                          <div className="mt-4">
+                            {task.status === "completed" ? (
+                              <button
+                                onClick={() =>
+                                  handleTaskStatusChange(task.id, "reactivate")
+                                }
+                                className="w-full px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                              >
+                                Aktifkan Kembali
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() =>
+                                  handleTaskStatusChange(task.id, "complete")
+                                }
+                                className="w-full px-3 py-2 text-sm font-medium text-white bg-primary border border-transparent rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                              >
+                                Tandai Selesai
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

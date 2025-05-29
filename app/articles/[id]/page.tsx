@@ -54,7 +54,7 @@ export default function ArticleDetailPage() {
         <div className="container mx-auto px-4 py-6 main-content">
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-[#E32345] border-t-transparent"></div>
-            <p className="mt-4 text-gray-500">Memuat artikel...</p>
+            <p className="mt-4 text-black">Memuat artikel...</p>
           </div>
         </div>
         <Footer />
@@ -68,10 +68,10 @@ export default function ArticleDetailPage() {
         <Navbar />
         <div className="container mx-auto px-4 py-6 main-content">
           <div className="text-center py-8 bg-white rounded-lg shadow-sm max-w-2xl mx-auto">
-            <h1 className="text-xl font-bold text-gray-800 mb-4">
+            <h1 className="text-xl font-bold text-black mb-4">
               Artikel Tidak Ditemukan
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-black mb-6">
               Artikel yang Anda cari tidak ada atau telah dihapus.
             </p>
             <Link
@@ -125,11 +125,11 @@ export default function ArticleDetailPage() {
             )}
 
             <div className="px-1 py-2">
-              <h1 className="text-2xl font-bold text-gray-900 mb-3">
+              <h1 className="text-2xl font-bold text-black mb-3">
                 {article.title}
               </h1>
 
-              <div className="flex items-center text-sm text-gray-600 mb-6">
+              <div className="flex items-center text-sm text-black mb-6">
                 <span className="mr-3">Oleh {article.author}</span>
                 <span>•</span>
                 <span className="ml-3">
@@ -138,11 +138,9 @@ export default function ArticleDetailPage() {
               </div>
 
               <div className="prose max-w-none">
-                <p className="text-base text-gray-700 mb-6">
-                  {article.summary}
-                </p>
+                <p className="text-base text-black mb-6">{article.summary}</p>
                 <div
-                  className="text-base text-gray-800 space-y-4 article-content"
+                  className="text-base text-black space-y-4 article-content"
                   dangerouslySetInnerHTML={{ __html: article.content }}
                 />
               </div>

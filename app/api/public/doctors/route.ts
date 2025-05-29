@@ -82,6 +82,8 @@ export async function GET() {
         id: doctor.id,
         name: `Dr. ${doctor.name}`,
         specialty: specialty,
+        spesialization: doctor.spesialization,
+        specializationId: doctor.spesialization,
         imageUrl: "", // Placeholder for image
         rating: parseFloat(rating),
         availability: availableDays.join(", "),

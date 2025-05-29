@@ -71,7 +71,9 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-4 text-black">Admin Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-4 text-black bg-white">
+        Admin Dashboard
+      </h1>
 
       {/* Database connection status */}
       <div
@@ -100,7 +102,7 @@ export default function AdminDashboard() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">Users</h2>
+            <h2 className="text-xl font-semibold text-black mb-2">Users</h2>
             <p className="text-4xl font-bold text-blue-500 mb-4">
               {stats.users}
             </p>
@@ -113,9 +115,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
-              Doctors
-            </h2>
+            <h2 className="text-xl font-semibold text-black mb-2">Doctors</h2>
             <p className="text-4xl font-bold text-blue-500 mb-4">
               {stats.doctors}
             </p>
@@ -128,7 +128,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            <h2 className="text-xl font-semibold text-black mb-2">
               Participants
             </h2>
             <p className="text-4xl font-bold text-blue-500 mb-4">
@@ -143,7 +143,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            <h2 className="text-xl font-semibold text-black mb-2">
               Appointments
             </h2>
             <p className="text-4xl font-bold text-blue-500 mb-4">
@@ -158,7 +158,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            <h2 className="text-xl font-semibold text-black mb-2">
               Health Programs
             </h2>
             <p className="text-4xl font-bold text-blue-500 mb-4">

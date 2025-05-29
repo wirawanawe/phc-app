@@ -97,7 +97,9 @@ export default function DoctorDetailPage() {
 
     return (
       <div className="bg-gray-50 rounded-lg p-4 mt-4">
-        <h3 className="text-lg font-semibold mb-2">Jadwal Praktek</h3>
+        <h3 className="text-lg font-semibold mb-2 text-black">
+          Jadwal Praktek
+        </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {days.map((day) => (
             <div
@@ -106,7 +108,7 @@ export default function DoctorDetailPage() {
             >
               <span className="font-medium">{day}</span>
               {!Array.isArray(schedule) && (
-                <span className="text-gray-700">{schedule[day]}</span>
+                <span className="text-black">{schedule[day]}</span>
               )}
             </div>
           ))}
@@ -119,7 +121,7 @@ export default function DoctorDetailPage() {
     return (
       <>
         <Navbar />
-        <main className="container mx-auto px-4 py-8 mb-16">
+        <main className="container mx-auto px-4 py-8 mb-16 bg-gray-50">
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
           </div>
@@ -133,12 +135,12 @@ export default function DoctorDetailPage() {
     return (
       <>
         <Navbar />
-        <main className="container mx-auto px-4 py-8 mb-16">
+        <main className="container mx-auto px-4 py-8 mb-16 bg-gray-50">
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
+            <h2 className="text-2xl font-semibold text-black mb-2">
               Dokter tidak ditemukan
             </h2>
-            <p className="text-gray-500 mb-4">
+            <p className="text-black mb-4">
               Dokter yang Anda cari tidak tersedia atau telah dihapus.
             </p>
             <Link
@@ -157,7 +159,7 @@ export default function DoctorDetailPage() {
   return (
     <>
       <Navbar />
-      <main className="container mx-auto px-4 py-8 mb-16">
+      <main className="container mx-auto px-4 py-8 mb-16 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <Link
             href="/doctors"
@@ -180,7 +182,7 @@ export default function DoctorDetailPage() {
 
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="md:flex">
-              <div className="md:w-1/3 relative h-64 md:h-auto bg-gray-200">
+              <div className="md:w-1/3 relative h-64 md:h-auto bg-gray-500">
                 {doctor.imageUrl ? (
                   <Image
                     src={doctor.imageUrl}
@@ -204,7 +206,7 @@ export default function DoctorDetailPage() {
               <div className="p-6 md:w-2/3">
                 <div className="flex justify-between items-start">
                   <div>
-                    <h1 className="text-2xl font-bold text-gray-900">
+                    <h1 className="text-2xl font-bold text-black">
                       {doctor.name}
                     </h1>
                     <p className="text-primary text-lg">{doctor.specialty}</p>
@@ -218,7 +220,7 @@ export default function DoctorDetailPage() {
                     >
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
-                    <span className="ml-1 font-medium">
+                    <span className="ml-1 font-medium text-black">
                       {doctor.rating?.toFixed(1) || "N/A"}
                     </span>
                   </div>
@@ -226,16 +228,16 @@ export default function DoctorDetailPage() {
 
                 {doctor.bio && (
                   <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-1">
+                    <h3 className="text-lg font-semibold mb-1 text-black">
                       Tentang Dokter
                     </h3>
-                    <p className="text-gray-700">{doctor.bio}</p>
+                    <p className="text-black">{doctor.bio}</p>
                   </div>
                 )}
 
                 <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="flex items-center text-gray-700">
+                    <p className="flex items-center text-black">
                       <svg
                         className="h-5 w-5 text-gray-500 mr-2"
                         xmlns="http://www.w3.org/2000/svg"
@@ -256,7 +258,7 @@ export default function DoctorDetailPage() {
 
                   {doctor.phone && (
                     <div>
-                      <p className="flex items-center text-gray-700">
+                      <p className="flex items-center text-black">
                         <svg
                           className="h-5 w-5 text-gray-500 mr-2"
                           xmlns="http://www.w3.org/2000/svg"
@@ -278,7 +280,7 @@ export default function DoctorDetailPage() {
 
                   {doctor.email && (
                     <div>
-                      <p className="flex items-center text-gray-700">
+                      <p className="flex items-center text-black">
                         <svg
                           className="h-5 w-5 text-gray-500 mr-2"
                           xmlns="http://www.w3.org/2000/svg"
@@ -316,10 +318,12 @@ export default function DoctorDetailPage() {
               <div className="grid md:grid-cols-2 gap-6">
                 {doctor.education && doctor.education.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Pendidikan</h3>
+                    <h3 className="text-lg font-semibold mb-3 text-black">
+                      Pendidikan
+                    </h3>
                     <ul className="space-y-2">
                       {doctor.education.map((edu, index) => (
-                        <li key={index} className="flex items-start">
+                        <li key={index} className="flex items-start text-black">
                           <svg
                             className="h-5 w-5 text-primary mr-2 mt-0.5"
                             xmlns="http://www.w3.org/2000/svg"
@@ -337,10 +341,12 @@ export default function DoctorDetailPage() {
 
                 {doctor.experience && doctor.experience.length > 0 && (
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Pengalaman</h3>
+                    <h3 className="text-lg font-semibold mb-3 text-black">
+                      Pengalaman
+                    </h3>
                     <ul className="space-y-2">
                       {doctor.experience.map((exp, index) => (
-                        <li key={index} className="flex items-start">
+                        <li key={index} className="flex items-start text-black">
                           <svg
                             className="h-5 w-5 text-primary mr-2 mt-0.5"
                             xmlns="http://www.w3.org/2000/svg"

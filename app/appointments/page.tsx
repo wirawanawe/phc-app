@@ -6,6 +6,24 @@ import Footer from "../components/Footer";
 import AppointmentForm from "../components/AppointmentForm";
 import Link from "next/link";
 import { getDictionary } from "../lib/dictionary";
+import { useAuth } from "../contexts/AuthContext";
+import { formatDate } from "../utils/dateUtils";
+import AppointmentQRCode from "../components/AppointmentQRCode";
+
+interface Doctor {
+  id: string;
+  name: string;
+}
+
+interface Appointment {
+  id: string;
+  date: string;
+  time: string;
+  status: "scheduled" | "completed" | "cancelled";
+  doctor: Doctor;
+  notes?: string;
+  participantId: string;
+}
 
 interface Dictionary {
   appointments: {
@@ -26,7 +44,12 @@ interface Dictionary {
 // };
 
 export default function AppointmentsPage() {
+  const { user } = useAuth();
   const [dictionary, setDictionary] = useState<Dictionary | null>(null);
+  const [activeTab, setActiveTab] = useState<"new" | "my">("new");
+  const [myAppointments, setMyAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const loadDictionary = async () => {
@@ -37,6 +60,31 @@ export default function AppointmentsPage() {
     loadDictionary();
   }, []);
 
+  // Fetch user's appointments if logged in and tab is "my"
+  useEffect(() => {
+    if (user && activeTab === "my") {
+      fetchMyAppointments();
+    }
+  }, [user, activeTab]);
+
+  const fetchMyAppointments = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await fetch("/api/appointments/my-appointments");
+      if (!response.ok) {
+        throw new Error("Failed to fetch appointments");
+      }
+      const data = await response.json();
+      setMyAppointments(data);
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+      setError("Failed to load your appointments. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Fallback text
   const text = {
     title: dictionary?.appointments?.title || "Buat Janji Temu Anda",
@@ -45,27 +93,52 @@ export default function AppointmentsPage() {
       "Jadwalkan konsultasi dengan spesialis kesehatan kami dengan cepat dan mudah.",
     home: dictionary?.common?.menu?.home || "Beranda",
     bookAppointment: "Buat Janji Temu",
-    whyChooseUs: "Mengapa Memilih Kami",
-    features: [
-      "Tenaga medis berpengalaman",
-      "Fasilitas medis modern",
-      "Layanan kesehatan komprehensif",
-      "Pendekatan perawatan berfokus pada pasien",
-      "Peralatan medis canggih",
-    ],
+    myAppointments: "Janji Temu Saya",
+    noAppointments: "Anda belum memiliki janji temu",
+    loading: "Memuat janji temu...",
+  };
+
+  // Function to render appointment status badge
+  const renderStatusBadge = (status: string) => {
+    switch (status) {
+      case "scheduled":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+            Terjadwal
+          </span>
+        );
+      case "completed":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            Selesai
+          </span>
+        );
+      case "cancelled":
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+            Dibatalkan
+          </span>
+        );
+      default:
+        return (
+          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            {status}
+          </span>
+        );
+    }
   };
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white">
       <Navbar />
 
-      <div className="bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12">
+      <div className="bg-white py-12">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            <h1 className="text-3xl md:text-4xl font-bold text-black mb-4">
               {text.title}
             </h1>
-            <p className="text-lg text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+            <p className="text-lg text-black max-w-3xl mx-auto">
               {text.description}
             </p>
           </div>
@@ -76,7 +149,7 @@ export default function AppointmentsPage() {
                 <li className="inline-flex items-center">
                   <Link
                     href="/"
-                    className="inline-flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-primary"
+                    className="inline-flex items-center text-sm font-medium text-black hover:text-primary"
                   >
                     <svg
                       className="w-4 h-4 mr-2"
@@ -103,7 +176,7 @@ export default function AppointmentsPage() {
                         clipRule="evenodd"
                       ></path>
                     </svg>
-                    <span className="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400 md:ml-2">
+                    <span className="ml-1 text-sm font-medium text-black md:ml-2">
                       {text.bookAppointment}
                     </span>
                   </div>
@@ -114,76 +187,167 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      <section className="py-16 bg-white dark:bg-gray-800">
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Tabs */}
+          {user && (
+            <div className="mb-8">
+              <div className="flex border-b border-gray-500">
+                <button
+                  onClick={() => setActiveTab("new")}
+                  className={`py-3 px-4 font-medium text-sm rounded-t-lg ${
+                    activeTab === "new"
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-black hover:text-primary"
+                  }`}
+                >
+                  {text.bookAppointment}
+                </button>
+                <button
+                  onClick={() => setActiveTab("my")}
+                  className={`py-3 px-4 font-medium text-sm rounded-t-lg ${
+                    activeTab === "my"
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-black hover:text-primary"
+                  }`}
+                >
+                  {text.myAppointments}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Content */}
+          {activeTab === "new" ? (
             <div className="lg:col-span-2">
               <AppointmentForm />
             </div>
-
-            <div>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 sticky top-24">
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  {text.whyChooseUs}
-                </h3>
-
-                <ul className="space-y-4">
-                  {text.features.map((feature, index) => (
-                    <li key={index} className="flex">
-                      <div className="flex-shrink-0">
-                        <svg
-                          className="h-6 w-6 text-primary"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
-                      </div>
-                      <p className="ml-3 text-gray-600 dark:text-gray-400">
-                        {feature}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-
-                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">
-                    Butuh Bantuan?
-                  </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    Tim layanan pelanggan kami siap membantu Anda dengan
-                    berbagai pertanyaan.
-                  </p>
-                  <div className="flex items-center">
-                    <svg
-                      className="h-5 w-5 text-primary"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
+          ) : (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
+              {loading ? (
+                <div className="p-6 text-center">
+                  <svg
+                    className="animate-spin h-8 w-8 mx-auto text-primary"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
                       stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                      />
-                    </svg>
-                    <span className="ml-2 text-gray-700 dark:text-gray-300">
-                      +62 (555) 123-4567
-                    </span>
-                  </div>
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  <p className="mt-4 text-gray-600 dark:text-gray-400">
+                    {text.loading}
+                  </p>
                 </div>
-              </div>
+              ) : error ? (
+                <div className="p-6 text-center">
+                  <p className="text-red-500 dark:text-red-400">{error}</p>
+                  <button
+                    onClick={fetchMyAppointments}
+                    className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                  >
+                    Coba Lagi
+                  </button>
+                </div>
+              ) : myAppointments.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="text-gray-600 dark:text-gray-400">
+                    {text.noAppointments}
+                  </p>
+                  <button
+                    onClick={() => setActiveTab("new")}
+                    className="mt-4 px-4 py-2 bg-primary text-white rounded-md hover:bg-primary-dark"
+                  >
+                    Buat Janji Temu
+                  </button>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-black dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          Tanggal & Waktu
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-black dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          Dokter
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-black dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          Status
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-black dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          Catatan
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-black dark:text-gray-300 uppercase tracking-wider"
+                        >
+                          QR Code
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                      {myAppointments.map((appointment) => (
+                        <tr
+                          key={appointment.id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            <div>{formatDate(new Date(appointment.date))}</div>
+                            <div className="text-black dark:text-gray-400">
+                              {appointment.time}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                            {appointment.doctor?.name || "Tidak tersedia"}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            {renderStatusBadge(appointment.status)}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-black dark:text-gray-400">
+                            {appointment.notes || "-"}
+                          </td>
+                          <td className="px-6 py-4">
+                            {appointment.status === "scheduled" && (
+                              <AppointmentQRCode appointment={appointment} />
+                            )}
+                            {appointment.status !== "scheduled" && (
+                              <span className="text-sm text-black dark:text-gray-400">
+                                -
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
-          </div>
+          )}
         </div>
       </section>
 

@@ -205,13 +205,13 @@ export default function AppointmentsPage() {
       {isFormOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">
+            <h2 className="text-xl font-semibold mb-4 text-black">
               {currentAppointment ? "Edit Appointment" : "Add New Appointment"}
             </h2>
             <form onSubmit={handleAddEdit}>
               <div className="mb-4">
                 <label
-                  className="block text-gray-700 mb-2"
+                  className="block text-black mb-2"
                   htmlFor="participantId"
                 >
                   Participant
@@ -221,7 +221,7 @@ export default function AppointmentsPage() {
                   name="participantId"
                   value={formData.participantId}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                   required
                 >
                   <option value="">Select a participant</option>
@@ -233,7 +233,7 @@ export default function AppointmentsPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="doctorId">
+                <label className="block text-black mb-2" htmlFor="doctorId">
                   Doctor
                 </label>
                 <select
@@ -241,7 +241,7 @@ export default function AppointmentsPage() {
                   name="doctorId"
                   value={formData.doctorId}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                   required
                 >
                   <option value="">Select a doctor</option>
@@ -253,7 +253,7 @@ export default function AppointmentsPage() {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="date">
+                <label className="block text-black mb-2" htmlFor="date">
                   Date
                 </label>
                 <input
@@ -262,12 +262,12 @@ export default function AppointmentsPage() {
                   name="date"
                   value={formData.date}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                   required
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="time">
+                <label className="block text-black mb-2" htmlFor="time">
                   Time
                 </label>
                 <input
@@ -276,11 +276,11 @@ export default function AppointmentsPage() {
                   name="time"
                   value={formData.time}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="status">
+                <label className="block text-black mb-2" htmlFor="status">
                   Status
                 </label>
                 <select
@@ -288,7 +288,7 @@ export default function AppointmentsPage() {
                   name="status"
                   value={formData.status}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                 >
                   <option value="scheduled">Scheduled</option>
                   <option value="completed">Completed</option>
@@ -296,7 +296,7 @@ export default function AppointmentsPage() {
                 </select>
               </div>
               <div className="mb-6">
-                <label className="block text-gray-700 mb-2" htmlFor="notes">
+                <label className="block text-black mb-2" htmlFor="notes">
                   Notes
                 </label>
                 <textarea
@@ -304,7 +304,7 @@ export default function AppointmentsPage() {
                   name="notes"
                   value={formData.notes}
                   onChange={handleInputChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  className="w-full border border-gray-300 rounded px-3 py-2 text-black"
                   rows={3}
                 />
               </div>
@@ -312,7 +312,7 @@ export default function AppointmentsPage() {
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+                  className="px-4 py-2 border border-gray-300 rounded text-black hover:bg-gray-100"
                 >
                   Cancel
                 </button>
@@ -333,22 +333,22 @@ export default function AppointmentsPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Participant
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Doctor
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Time
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                 Actions
               </th>
             </tr>

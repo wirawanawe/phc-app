@@ -51,7 +51,7 @@ async function setupDatabase() {
         specialization VARCHAR(100) NOT NULL,
         email VARCHAR(100),
         phone VARCHAR(20),
-        schedule TEXT COMMENT 'JSON string containing the doctor\'s practice schedule',
+        schedule TEXT COMMENT "JSON string containing the doctor practice schedule",
         createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )

@@ -188,7 +188,9 @@ export default function UsersPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-black">Users Management</h1>
+        <h1 className="text-3xl font-bold text-black bg-white">
+          Users Management
+        </h1>
         <div className="flex space-x-3">
           <button
             onClick={fetchUsers}
@@ -218,7 +220,7 @@ export default function UsersPage() {
             </h2>
             <form onSubmit={handleAddEdit}>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="username">
+                <label className="block text-black mb-2" htmlFor="username">
                   Username
                 </label>
                 <input
@@ -232,7 +234,7 @@ export default function UsersPage() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="email">
+                <label className="block text-black mb-2" htmlFor="email">
                   Email
                 </label>
                 <input
@@ -246,7 +248,7 @@ export default function UsersPage() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="fullName">
+                <label className="block text-black mb-2" htmlFor="fullName">
                   Full Name
                 </label>
                 <input
@@ -260,7 +262,7 @@ export default function UsersPage() {
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="role">
+                <label className="block text-black mb-2" htmlFor="role">
                   Role
                 </label>
                 <select
@@ -291,13 +293,13 @@ export default function UsersPage() {
                   }
                   className="mr-2"
                 />
-                <label className="text-gray-700" htmlFor="isActive">
+                <label className="text-black" htmlFor="isActive">
                   Active
                 </label>
               </div>
               {/* Password fields */}
               <div className="mb-4">
-                <label className="block text-gray-700 mb-2" htmlFor="password">
+                <label className="block text-black mb-2" htmlFor="password">
                   {currentUser
                     ? "Password (kosongkan jika tidak ingin mengubah)"
                     : "Password"}
@@ -314,7 +316,7 @@ export default function UsersPage() {
               </div>
               <div className="mb-4">
                 <label
-                  className="block text-gray-700 mb-2"
+                  className="block text-black mb-2"
                   htmlFor="confirmPassword"
                 >
                   Konfirmasi Password
@@ -333,7 +335,7 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100"
+                  className="px-4 py-2 border border-gray-300 rounded text-black hover:bg-gray-100"
                 >
                   Cancel
                 </button>
@@ -354,22 +356,22 @@ export default function UsersPage() {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Username
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Full Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Email
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Role
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                 Actions
               </th>
             </tr>
@@ -383,7 +385,7 @@ export default function UsersPage() {
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={6} className="px-6 py-4 text-center text-black">
                   No users found. Add a new user to get started.
                 </td>
               </tr>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { DoctorModel, initializeDatabase } from "@/app/models";
 import { QueryTypes } from "sequelize";
 import sequelize from "@/app/config/db.config";
+import { verifyToken } from "@/app/utils/auth";
 
 // GET all doctors from the MySQL database
 export async function GET() {
@@ -11,11 +12,9 @@ export async function GET() {
 
     try {
       // First try with all attributes
-      console.log("Attempting to fetch all doctors");
       const doctors = await DoctorModel.findAll({
         order: [["createdAt", "DESC"]],
       });
-      console.log(`Successfully fetched ${doctors.length} doctors`);
       return NextResponse.json(doctors);
     } catch (dbError: any) {
       console.error("Error details:", {
@@ -25,7 +24,6 @@ export async function GET() {
         sql: dbError.sql,
       });
 
-      console.log("Using raw SQL fallback query");
       // Use raw SQL as a fallback to avoid column name issues
       const rawDoctors = await sequelize.query(
         `SELECT 
@@ -42,7 +40,6 @@ export async function GET() {
         { type: QueryTypes.SELECT }
       );
 
-      console.log(`SQL query fetched ${rawDoctors.length} doctors`);
       return NextResponse.json(rawDoctors);
     }
   } catch (error) {
@@ -55,20 +52,42 @@ export async function GET() {
 }
 
 // POST create a new doctor in the MySQL database
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    // Make sure database is initialized
+    // Initialize database
     await initializeDatabase();
 
-    const body = await request.json();
-    console.log("POST /api/admin/doctors - Request body:", body);
+    // Get token from cookie
+    const token = req.cookies.get("phc_token")?.value;
+
+    if (!token) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Verify token
+    const payload = verifyToken(token);
+    if (!payload || !payload.userId) {
+      return NextResponse.json(
+        { error: "Invalid authentication token" },
+        { status: 401 }
+      );
+    }
+
+    // Check if user is admin
+    if (payload.role !== "admin") {
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
 
     // Validate required fields
     if (!body.name || !body.spesialisasiId) {
-      console.log("Validation failed: Name or specialization missing", {
-        name: body.name,
-        spesialisasiId: body.spesialisasiId,
-      });
       return NextResponse.json(
         { error: "Name and specialization are required fields" },
         { status: 400 }
@@ -85,7 +104,6 @@ export async function POST(request: NextRequest) {
         schedule: body.schedule,
       });
 
-      console.log("Doctor created successfully:", newDoctor.toJSON());
       return NextResponse.json(newDoctor, { status: 201 });
     } catch (dbError: any) {
       console.error("Error creating doctor:", dbError);
@@ -94,10 +112,6 @@ export async function POST(request: NextRequest) {
         dbError?.original?.code === "ER_BAD_FIELD_ERROR" &&
         dbError?.original?.sqlMessage?.includes("Unknown column 'schedule'")
       ) {
-        console.warn(
-          "Schedule column not found in doctors table. Creating doctor without schedule field."
-        );
-
         // Fallback to creating without the schedule field
         const newDoctor = await DoctorModel.create({
           name: body.name,

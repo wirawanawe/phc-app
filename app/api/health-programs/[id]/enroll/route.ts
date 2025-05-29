@@ -4,174 +4,154 @@ import { verifyToken } from "@/app/utils/auth";
 import { v4 as uuidv4 } from "uuid";
 import { QueryTypes } from "sequelize";
 
+// Force dynamic rendering for this route
+export const dynamic = "force-dynamic";
+
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  console.log("API: Enrollment request received for program ID:", params.id);
-
   try {
     // Make sure the ID is properly formatted
     const healthProgramId = params.id;
-    console.log("API: Processing enrollment for program ID:", healthProgramId);
 
-    // Get token from cookie
+    // Get request body data
+    const reqData = await req.json().catch(() => ({}));
+    const { participantId: requestParticipantId, email } = reqData;
+
+    // Get token from cookie if available (but not required)
     const token = req.cookies.get("phc_token")?.value;
-
-    // If no token in cookie, check header as fallback
     const authHeader = req.headers.get("authorization");
-    const headerToken =
-      authHeader && authHeader.startsWith("Bearer ")
-        ? authHeader.split(" ")[1]
-        : null;
-
-    // Use token from cookie or header
+    const headerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.split(" ")[1]
+      : null;
     const authToken = token || headerToken;
 
-    if (!authToken) {
-      console.log("API: Authentication token not found");
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
-    }
+    let participantId = null;
 
-    try {
-      const payload = verifyToken(authToken);
-      if (!payload || !payload.userId) {
-        console.log("API: Invalid or expired token");
-        return NextResponse.json(
-          { error: "Invalid authentication token" },
-          { status: 401 }
-        );
-      }
-
-      const userId = payload.userId;
-      console.log("API: Authenticated user ID:", userId);
-
-      // Get the participant by using userId field - Simplified query
+    // Try to get participantId from different sources with fallbacks
+    if (requestParticipantId) {
+      // If participantId provided directly in request, use it (highest priority)
+      participantId = requestParticipantId;
+    } else if (authToken) {
+      // If auth token available, try to extract userId
       try {
-        const [participant] = await sequelize.query(
-          `SELECT id FROM participants WHERE id = ?`,
-          {
-            replacements: [userId],
-            type: QueryTypes.SELECT,
-          }
-        );
-
-        if (!participant) {
-          console.log(
-            "API: Participant profile not found for user ID:",
-            userId
-          );
-          return NextResponse.json(
-            { error: "Participant profile not found" },
-            { status: 404 }
-          );
-        }
-
-        const participantId = (participant as any).id;
-        console.log("API: Found participant ID:", participantId);
-
-        // Check if the health program exists - Simplified query
-        const [program] = await sequelize.query(
-          `SELECT id, status FROM health_programs WHERE id = ?`,
-          {
-            replacements: [healthProgramId],
-            type: QueryTypes.SELECT,
-          }
-        );
-
-        if (!program) {
-          console.log("API: Health program not found:", healthProgramId);
-          return NextResponse.json(
-            { error: "Health program not found" },
-            { status: 404 }
-          );
-        }
-
-        if ((program as any).status !== "active") {
-          console.log("API: Health program is not active:", healthProgramId);
-          return NextResponse.json(
-            { error: "Health program is not active" },
-            { status: 400 }
-          );
-        }
-
-        // Check if the participant is already enrolled in this program - Simplified query
-        const [existingEnrollment] = await sequelize.query(
-          `SELECT id FROM participant_enrollments WHERE participantId = ? AND healthProgramId = ?`,
-          {
-            replacements: [participantId, healthProgramId],
-            type: QueryTypes.SELECT,
-          }
-        );
-
-        if (existingEnrollment) {
-          console.log("API: Participant already enrolled in this program");
-          return NextResponse.json({
-            success: true,
-            message: "Already enrolled in this program",
-            enrollmentId: (existingEnrollment as any).id,
-          });
-        }
-
-        // Create a new enrollment with safe insert
-        const enrollmentId = uuidv4();
-        console.log("API: Creating new enrollment with ID:", enrollmentId);
-
-        await sequelize.query(
-          `INSERT INTO participant_enrollments 
-           (id, participantId, healthProgramId, status, enrollmentDate, createdAt, updatedAt)
-           VALUES (?, ?, ?, 'active', NOW(), NOW(), NOW())`,
-          {
-            replacements: [enrollmentId, participantId, healthProgramId],
-            type: QueryTypes.INSERT,
-          }
-        );
-
-        console.log("API: Successfully enrolled participant in program");
-        return NextResponse.json({
-          success: true,
-          message: "Successfully enrolled in program",
-          enrollmentId: enrollmentId,
-        });
-      } catch (dbError: any) {
-        console.error("API: Database error:", dbError);
-
-        // Handle duplicate entry errors
-        if (dbError.code === "ER_DUP_ENTRY") {
-          console.log(
-            "API: Duplicate entry error - checking if enrollment exists"
-          );
-
-          // Check if enrollment actually exists
-          const [existingEnrollment] = await sequelize.query(
-            `SELECT id FROM participant_enrollments WHERE participantId = ? AND healthProgramId = ?`,
+        const payload = verifyToken(authToken);
+        if (payload && payload.userId) {
+          // Check if user has a participant profile
+          const [participant] = await sequelize.query(
+            `SELECT id FROM participants WHERE id = ?`,
             {
-              replacements: [userId, healthProgramId],
+              replacements: [payload.userId],
               type: QueryTypes.SELECT,
             }
           );
 
-          if (existingEnrollment) {
-            return NextResponse.json({
-              success: true,
-              message: "Already enrolled in this program",
-              enrollmentId: (existingEnrollment as any).id,
-            });
+          if (participant) {
+            participantId = (participant as any).id;
           }
         }
-
-        throw dbError; // Re-throw if not handled
+      } catch (tokenError) {
+        // Token verification error, continue with alternate methods
       }
-    } catch (tokenError) {
-      console.error("API: Token verification error:", tokenError);
+    } else if (email) {
+      // Try to find participant by email if no token available
+      const [participant] = await sequelize.query(
+        `SELECT id FROM participants WHERE email = ?`,
+        {
+          replacements: [email],
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if (participant) {
+        participantId = (participant as any).id;
+      }
+    }
+
+    // If no participant ID found by any method, create a guest enrollment
+    if (!participantId) {
+      participantId = uuidv4();
+    }
+
+    // Check if the health program exists and is active
+    const [program] = await sequelize.query(
+      `SELECT id, status, maxParticipants, startDate FROM health_programs WHERE id = ?`,
+      {
+        replacements: [healthProgramId],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (!program) {
       return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
+        { error: "Health program not found" },
+        { status: 404 }
       );
     }
+
+    if ((program as any).status !== "active") {
+      return NextResponse.json(
+        { error: "Health program is not active" },
+        { status: 400 }
+      );
+    }
+
+    // Check if program has reached maximum participant limit
+    if ((program as any).maxParticipants) {
+      const [enrollmentCount] = await sequelize.query(
+        `SELECT COUNT(*) as count FROM participant_enrollments WHERE healthProgramId = ? AND status = 'active'`,
+        {
+          replacements: [healthProgramId],
+          type: QueryTypes.SELECT,
+        }
+      );
+
+      if ((enrollmentCount as any).count >= (program as any).maxParticipants) {
+        return NextResponse.json(
+          { error: "Program has reached maximum enrollment limit" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Check if the participant is already enrolled in this program
+    const [existingEnrollment] = await sequelize.query(
+      `SELECT id FROM participant_enrollments WHERE participantId = ? AND healthProgramId = ?`,
+      {
+        replacements: [participantId, healthProgramId],
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (existingEnrollment) {
+      return NextResponse.json({
+        success: true,
+        message: "Already enrolled in this program",
+        enrollmentId: (existingEnrollment as any).id,
+        participantId: participantId,
+      });
+    }
+
+    // Create a new enrollment with safe insert
+    const enrollmentId = uuidv4();
+
+    await sequelize.query(
+      `INSERT INTO participant_enrollments 
+       (id, participantId, healthProgramId, status, enrollmentDate, createdAt, updatedAt)
+       VALUES (?, ?, ?, 'active', NOW(), NOW(), NOW())`,
+      {
+        replacements: [enrollmentId, participantId, healthProgramId],
+        type: QueryTypes.INSERT,
+      }
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: "Successfully enrolled in program",
+      enrollmentId: enrollmentId,
+      participantId: participantId,
+    });
   } catch (error: any) {
     console.error("API: Global error during enrollment:", error);
 

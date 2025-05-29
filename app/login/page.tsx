@@ -1,14 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense, useMemo, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Image from "next/image";
 import { getDictionary } from "../lib/dictionary";
 import { useAuth } from "@/app/contexts/AuthContext";
 import { hasRole } from "@/app/utils/roleHelper";
 import { Insurance } from "@/app/types";
+import SessionExpiredModal from "../components/SessionExpiredModal";
 
 interface Dictionary {
   login: {
@@ -29,7 +31,371 @@ interface Dictionary {
   };
 }
 
-export default function LoginPage() {
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+interface RegisterFormData extends LoginFormData {
+  name: string;
+  phone: string;
+  username?: string;
+  identityNumber?: string;
+  insuranceId?: string;
+  insuranceNumber?: string;
+}
+
+interface FormProps {
+  onSubmit: (data: LoginFormData | RegisterFormData) => Promise<void>;
+  loading: boolean;
+  loginText: Dictionary["login"];
+  error: string;
+  successMessage: string;
+}
+
+interface RegisterFormProps extends FormProps {
+  insurances: Insurance[];
+}
+
+const LoginForm: React.FC<FormProps> = ({
+  onSubmit,
+  loading,
+  loginText,
+  error,
+  successMessage,
+}) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      onSubmit({ email, password });
+    },
+    [email, password, onSubmit]
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-black">
+          {loginText.email}
+        </label>
+        <input
+          id="email"
+          name="email"
+          type="text"
+          autoComplete="username"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder={loginText.email}
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-black"
+        >
+          {loginText.password}
+        </label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder={loginText.password}
+        />
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            name="remember-me"
+            type="checkbox"
+            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 text-black dark:border-gray-700 rounded"
+          />
+          <label
+            htmlFor="remember-me"
+            className="ml-2 block text-sm text-black"
+          >
+            {loginText.remember}
+          </label>
+        </div>
+
+        <div className="text-sm">
+          <Link
+            href="/forgot-password"
+            className="font-medium text-primary hover:text-primary-dark"
+          >
+            {loginText.forgot}
+          </Link>
+        </div>
+      </div>
+
+      <div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#E32345] hover:bg-[#E32345] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+        >
+          {loading ? (
+            <svg
+              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          ) : null}
+          {loading ? "Memproses..." : loginText.submit}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+const RegisterForm: React.FC<RegisterFormProps> = ({
+  onSubmit,
+  loading,
+  loginText,
+  error,
+  successMessage,
+  insurances,
+}) => {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [phone, setPhone] = useState("");
+  const [username, setUsername] = useState("");
+  const [identityNumber, setIdentityNumber] = useState("");
+  const [insuranceId, setInsuranceId] = useState("");
+  const [insuranceNumber, setInsuranceNumber] = useState("");
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+      onSubmit({
+        name,
+        email,
+        password,
+        phone,
+        username,
+        identityNumber,
+        insuranceId,
+        insuranceNumber,
+      });
+    },
+    [
+      name,
+      email,
+      password,
+      phone,
+      username,
+      identityNumber,
+      insuranceId,
+      insuranceNumber,
+      onSubmit,
+    ]
+  );
+
+  // Function to check if insurance number field should be shown
+  const shouldShowInsuranceNumber = () => {
+    // Get selected insurance from the list
+    if (!insuranceId) return false;
+
+    const selectedInsurance = insurances.find((ins) => ins.id === insuranceId);
+    // Only show insurance number field if insurance is not "Umum"
+    return selectedInsurance && selectedInsurance.name !== "Umum";
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="name" className="block text-sm font-medium text-black">
+          Nama Lengkap
+        </label>
+        <input
+          id="name"
+          name="name"
+          type="text"
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder="John Doe"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="username"
+          className="block text-sm font-medium text-black"
+        >
+          Username (Opsional)
+        </label>
+        <input
+          id="username"
+          name="username"
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder="johndoe123"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-black">
+          Nomor Telepon
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder="08123456789"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="identityNumber"
+          className="block text-sm font-medium text-black"
+        >
+          Nomor Identitas
+        </label>
+        <input
+          id="identityNumber"
+          name="identityNumber"
+          type="text"
+          value={identityNumber}
+          onChange={(e) => setIdentityNumber(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder="3274XXXXXXXXXXX"
+        />
+      </div>
+
+      <div>
+        <label
+          htmlFor="insuranceId"
+          className="block text-sm font-medium text-black"
+        >
+          Asuransi
+        </label>
+        <select
+          id="insuranceId"
+          name="insuranceId"
+          value={insuranceId}
+          onChange={(e) => setInsuranceId(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+        >
+          <option value="">Pilih Asuransi (Opsional)</option>
+          {insurances.map((insurance) => (
+            <option key={insurance.id} value={insurance.id}>
+              {insurance.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {shouldShowInsuranceNumber() && (
+        <div>
+          <label
+            htmlFor="insuranceNumber"
+            className="block text-sm font-medium text-black"
+          >
+            Nomor Asuransi
+          </label>
+          <input
+            id="insuranceNumber"
+            name="insuranceNumber"
+            type="text"
+            value={insuranceNumber}
+            onChange={(e) => setInsuranceNumber(e.target.value)}
+            className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+            placeholder="123456789"
+          />
+        </div>
+      )}
+
+      <div>
+        <label
+          htmlFor="confirmPassword"
+          className="block text-sm font-medium text-black"
+        >
+          {loginText.confirmPassword}
+        </label>
+        <input
+          id="confirmPassword"
+          name="confirmPassword"
+          type="password"
+          required
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="mt-1 block w-full border-gray-300 text-black dark:border-gray-700 dark:bg-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
+          placeholder="Konfirmasi kata sandi"
+        />
+      </div>
+
+      <div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#E32345] hover:bg-[#E32345] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+        >
+          {loading ? (
+            <svg
+              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          ) : null}
+          {loading ? "Memproses..." : loginText.register}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+function LoginPageContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -46,7 +412,38 @@ export default function LoginPage() {
   const [successMessage, setSuccessMessage] = useState("");
   const [dictionary, setDictionary] = useState<Dictionary | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login, user } = useAuth();
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState("");
+
+  // Check URL parameters for session expiration
+  useEffect(() => {
+    const expired = searchParams.get("expired");
+    const reason = searchParams.get("reason");
+
+    if (expired === "true") {
+      if (reason === "ip_changed") {
+        setSessionExpiredMessage(
+          "Terdeteksi penggunaan dari perangkat atau lokasi yang berbeda. Harap login kembali untuk alasan keamanan."
+        );
+      } else {
+        setSessionExpiredMessage(
+          "Sesi login Anda telah berakhir. Harap login kembali untuk melanjutkan."
+        );
+      }
+      setSessionExpired(true);
+
+      // Update URL without the query parameters to prevent showing the modal again on refresh
+      window.history.replaceState({}, "", "/login");
+    }
+  }, [searchParams]);
+
+  // Close the session expired modal
+  const handleCloseSessionModal = () => {
+    setSessionExpired(false);
+    setSessionExpiredMessage("");
+  };
 
   useEffect(() => {
     if (user) {
@@ -103,28 +500,30 @@ export default function LoginPage() {
     }
   }, [isLogin]);
 
-  // Fallback text
-  const loginText = {
-    signin: dictionary?.login?.signin || "Masuk ke akun Anda",
-    create: dictionary?.login?.create || "Buat akun baru",
-    credentials:
-      dictionary?.login?.credentials ||
-      "Masukkan kredensial Anda untuk mengakses dasbor kesehatan Anda",
-    join:
-      dictionary?.login?.join ||
-      "Bergabunglah dengan platform kesehatan kami untuk mengelola kesehatan Anda dengan lebih efisien",
-    email: dictionary?.login?.email || "Email",
-    password: dictionary?.login?.password || "Kata Sandi",
-    confirmPassword:
-      dictionary?.login?.confirmPassword || "Konfirmasi Kata Sandi",
-    remember: dictionary?.login?.remember || "Ingat saya",
-    forgot: dictionary?.login?.forgot || "Lupa kata sandi?",
-    submit: dictionary?.login?.submit || "Masuk",
-    register: dictionary?.login?.register || "Daftar",
-    account: dictionary?.login?.account || "Sudah punya akun?",
-    noAccount: dictionary?.login?.noAccount || "Belum punya akun?",
-    or: dictionary?.login?.or || "atau",
-  };
+  const loginText = useMemo(
+    () => ({
+      signin: dictionary?.login?.signin || "Masuk ke akun Anda",
+      create: dictionary?.login?.create || "Buat akun baru",
+      credentials:
+        dictionary?.login?.credentials ||
+        "Masukkan kredensial Anda untuk mengakses dasbor kesehatan Anda",
+      join:
+        dictionary?.login?.join ||
+        "Bergabunglah dengan platform kesehatan kami untuk mengelola kesehatan Anda dengan lebih efisien",
+      email: dictionary?.login?.email || "Email",
+      password: dictionary?.login?.password || "Kata Sandi",
+      confirmPassword:
+        dictionary?.login?.confirmPassword || "Konfirmasi Kata Sandi",
+      remember: dictionary?.login?.remember || "Ingat saya",
+      forgot: dictionary?.login?.forgot || "Lupa kata sandi?",
+      submit: dictionary?.login?.submit || "Masuk",
+      register: dictionary?.login?.register || "Daftar",
+      account: dictionary?.login?.account || "Sudah punya akun?",
+      noAccount: dictionary?.login?.noAccount || "Belum punya akun?",
+      or: dictionary?.login?.or || "atau",
+    }),
+    [dictionary]
+  );
 
   const validateForm = () => {
     if (!isLogin) {
@@ -146,23 +545,14 @@ export default function LoginPage() {
     return true;
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (formData: RegisterFormData) => {
     try {
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          phone,
-          username: username || undefined, // Only send if provided
-          identityNumber: identityNumber || undefined,
-          insuranceId: insuranceId || undefined,
-          insuranceNumber: insuranceNumber || undefined,
-        }),
+        body: JSON.stringify(formData),
       });
 
       if (response.ok) {
@@ -189,79 +579,30 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccessMessage("");
+  const handleSubmit = useCallback(
+    async (formData: LoginFormData | RegisterFormData) => {
+      setError("");
+      setSuccessMessage("");
+      setLoading(true);
 
-    // Validate form inputs first
-    if (!email) {
-      setError("Silakan masukkan email atau username Anda");
-      return;
-    }
-
-    if (!password) {
-      setError("Silakan masukkan password Anda");
-      return;
-    }
-
-    // Additional validation if needed
-    if (!validateForm()) {
-      return;
-    }
-
-    setLoading(true);
-
-    if (isLogin) {
-      // Login
       try {
-        console.log("Login: Attempting login with:", email);
-        const success = await login(email, password);
-
-        if (success) {
-          // Redirect akan ditangani oleh useEffect di atas
-          console.log(
-            "Login: Login successful, redirect will be handled by useEffect"
-          );
+        if (isLogin) {
+          const success = await login(formData.email, formData.password);
+          if (!success) {
+            setError("Email/username atau password salah. Silakan coba lagi.");
+          }
         } else {
-          console.log("Login: Login failed");
-          setError("Email/username atau password salah. Silakan coba lagi.");
+          await handleRegister(formData as RegisterFormData);
         }
       } catch (err) {
-        console.error("Login: Error during login process:", err);
-        let errorMessage = "Terjadi kesalahan saat login.";
-
-        if (err instanceof Error) {
-          console.error("Login error details:", err.message);
-          // Provide more specific error messages based on error
-          if (
-            err.message.includes("network") ||
-            err.message.includes("fetch")
-          ) {
-            errorMessage =
-              "Gagal terhubung ke server. Periksa koneksi internet Anda.";
-          }
-        }
-
-        setError(errorMessage);
+        console.error("Error:", err);
+        setError("Terjadi kesalahan. Silakan coba lagi.");
+      } finally {
+        setLoading(false);
       }
-    } else {
-      // Register
-      await handleRegister();
-    }
-
-    setLoading(false);
-  };
-
-  // Function to check if insurance number field should be shown
-  const shouldShowInsuranceNumber = () => {
-    // Get selected insurance from the list
-    if (!insuranceId) return false;
-
-    const selectedInsurance = insurances.find((ins) => ins.id === insuranceId);
-    // Only show insurance number field if insurance is not "Umum"
-    return selectedInsurance && selectedInsurance.name !== "Umum";
-  };
+    },
+    [isLogin, login]
+  );
 
   // Jika sudah login, jangan tampilkan halaman login
   if (user) {
@@ -269,295 +610,128 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gray-100 pb-20">
       <Navbar />
-
-      <div className="py-16 bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-            <div className="p-6 sm:p-8">
-              <div className="text-center mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {isLogin ? loginText.signin : loginText.create}
-                </h1>
-                <p className="mt-2 text-gray-600 dark:text-gray-400">
-                  {isLogin ? loginText.credentials : loginText.join}
+      <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 my-8">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="flex flex-col md:flex-row">
+            {/* Logo section - Shows at top on mobile, right side on desktop */}
+            <div className="md:order-2 md:w-1/2 bg-[#E32345] p-8 flex items-center justify-center">
+              <div className="text-center">
+                <Image
+                  src="/logo doctorPHC.jpg"
+                  alt="PHC Logo"
+                  width={200}
+                  height={200}
+                  className="mx-auto mb-4"
+                />
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Selamat Datang di PHC
+                </h3>
+                <p className="text-blue-100">
+                  Kembangkan kesehatan Anda bersama kami.
                 </p>
               </div>
+            </div>
+
+            {/* Form section - Shows below logo on mobile, left side on desktop */}
+            <div className="md:order-1 md:w-1/2 p-6 sm:p-8">
+              <h2 className="text-2xl font-bold text-black mb-2">
+                {isLogin ? loginText.signin : loginText.create}
+              </h2>
+              <p className="text-black mb-6">
+                {isLogin ? loginText.credentials : loginText.join}
+              </p>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-100 border border-red-200 text-red-700 rounded">
-                  {error}
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-red-500"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
               {successMessage && (
-                <div className="mb-4 p-3 bg-green-100 border border-green-200 text-green-700 rounded">
-                  {successMessage}
+                <div className="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg
+                        className="h-5 w-5 text-green-500"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-green-700">{successMessage}</p>
+                    </div>
+                  </div>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {!isLogin && (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="name"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >
-                        Nama Lengkap
-                      </label>
-                      <input
-                        id="name"
-                        name="name"
-                        type="text"
-                        required
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                        placeholder="John Doe"
-                      />
-                    </div>
+              {isLogin ? (
+                <LoginForm
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                  loginText={loginText}
+                  error={error}
+                  successMessage={successMessage}
+                />
+              ) : (
+                <RegisterForm
+                  onSubmit={handleSubmit}
+                  loading={loading}
+                  loginText={loginText}
+                  error={error}
+                  successMessage={successMessage}
+                  insurances={insurances}
+                />
+              )}
 
-                    <div>
-                      <label
-                        htmlFor="username"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >
-                        Username (Opsional)
-                      </label>
-                      <input
-                        id="username"
-                        name="username"
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                        placeholder="johndoe123"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="phone"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >
-                        Nomor Telepon
-                      </label>
-                      <input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                        placeholder="08123456789"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="identityNumber"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >
-                        Nomor Identitas
-                      </label>
-                      <input
-                        id="identityNumber"
-                        name="identityNumber"
-                        type="text"
-                        value={identityNumber}
-                        onChange={(e) => setIdentityNumber(e.target.value)}
-                        className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                        placeholder="3274XXXXXXXXXXX"
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="insuranceId"
-                        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                      >
-                        Asuransi
-                      </label>
-                      <select
-                        id="insuranceId"
-                        name="insuranceId"
-                        value={insuranceId}
-                        onChange={(e) => setInsuranceId(e.target.value)}
-                        className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                      >
-                        <option value="">Pilih Asuransi (Opsional)</option>
-                        {insurances.map((insurance) => (
-                          <option key={insurance.id} value={insurance.id}>
-                            {insurance.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {shouldShowInsuranceNumber() && (
-                      <div>
-                        <label
-                          htmlFor="insuranceNumber"
-                          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                        >
-                          Nomor Asuransi
-                        </label>
-                        <input
-                          id="insuranceNumber"
-                          name="insuranceNumber"
-                          type="text"
-                          value={insuranceNumber}
-                          onChange={(e) => setInsuranceNumber(e.target.value)}
-                          className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                          placeholder="123456789"
-                        />
-                      </div>
-                    )}
-                  </>
-                )}
-
-                <div>
-                  <label
-                    htmlFor="email"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    {isLogin ? "Email atau Username" : loginText.email}
-                  </label>
-                  <input
-                    id="email"
-                    name="email"
-                    type={isLogin ? "text" : "email"}
-                    autoComplete={isLogin ? "username" : "email"}
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                    placeholder={
-                      isLogin
-                        ? "name@email.com atau username"
-                        : "name@email.com"
-                    }
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                  >
-                    {loginText.password}
-                  </label>
-                  <input
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                    placeholder={isLogin ? "••••••••" : "Minimal 6 karakter"}
-                  />
-                </div>
-
-                {!isLogin && (
-                  <div>
-                    <label
-                      htmlFor="confirmPassword"
-                      className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+              <div className="mt-4 text-center">
+                {isLogin ? (
+                  <p className="text-sm text-black">
+                    {loginText.noAccount}{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsLogin(false)}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      {loginText.confirmPassword}
-                    </label>
-                    <input
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      type="password"
-                      required
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-800 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary focus:border-primary"
-                      placeholder="Konfirmasi kata sandi"
-                    />
-                  </div>
+                      {loginText.register}
+                    </button>
+                  </p>
+                ) : (
+                  <p className="text-sm text-black">
+                    {loginText.account}{" "}
+                    <button
+                      type="button"
+                      onClick={() => setIsLogin(true)}
+                      className="text-blue-600 hover:text-blue-800 font-medium"
+                    >
+                      {loginText.submit}
+                    </button>
+                  </p>
                 )}
-
-                {isLogin && (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        id="remember-me"
-                        name="remember-me"
-                        type="checkbox"
-                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 dark:border-gray-700 rounded"
-                      />
-                      <label
-                        htmlFor="remember-me"
-                        className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
-                      >
-                        {loginText.remember}
-                      </label>
-                    </div>
-
-                    <div className="text-sm">
-                      <Link
-                        href="/forgot-password"
-                        className="font-medium text-primary hover:text-primary-dark"
-                      >
-                        {loginText.forgot}
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                    ) : null}
-                    {loading
-                      ? "Memproses..."
-                      : isLogin
-                      ? loginText.submit
-                      : loginText.register}
-                  </button>
-                </div>
-              </form>
-
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {isLogin ? loginText.noAccount : loginText.account}
-                  <button
-                    type="button"
-                    onClick={() => setIsLogin(!isLogin)}
-                    className="ml-1 font-medium text-primary hover:text-primary-dark"
-                  >
-                    {isLogin ? loginText.register : loginText.submit}
-                  </button>
-                </p>
               </div>
             </div>
           </div>
@@ -565,6 +739,21 @@ export default function LoginPage() {
       </div>
 
       <Footer />
+
+      {/* Session Expired Modal */}
+      <SessionExpiredModal
+        isOpen={sessionExpired}
+        message={sessionExpiredMessage}
+        onClose={handleCloseSessionModal}
+      />
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

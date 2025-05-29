@@ -34,6 +34,12 @@ export default function Navbar() {
     setIsProfileDropdownOpen(false);
   };
 
+  const handleAppointmentsClick = () => {
+    setIsMenuOpen(false);
+    setIsProfileDropdownOpen(false);
+    router.push("/profile/appointments");
+  };
+
   const handleMyProgramsClick = (e: React.MouseEvent) => {
     // Selalu tutup menu profile
     setIsProfileDropdownOpen(false);
@@ -221,6 +227,27 @@ export default function Navbar() {
                             />
                           </svg>
                           Program Saya
+                        </Link>
+                        <Link
+                          href="/profile/appointments"
+                          onClick={handleAppointmentsClick}
+                          className="flex items-center px-6 py-2.5 text-sm text-white hover:bg-gray-800"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 mr-3"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          Janji Temu
                         </Link>
                         {hasRole(user.role, "admin") && (
                           <Link
@@ -469,6 +496,13 @@ export default function Navbar() {
                       onClick={handleProfileClick}
                     >
                       Profil Saya
+                    </Link>
+                    <Link
+                      href="/profile/appointments"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg"
+                      onClick={handleProfileClick}
+                    >
+                      Janji Temu
                     </Link>
                     <Link
                       href="/profile/settings"

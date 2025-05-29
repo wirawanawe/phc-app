@@ -261,10 +261,10 @@ export default function WebsiteSettingsPage() {
   return (
     <div className="p-6">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">
+        <h1 className="text-2xl font-bold text-black bg-white mb-2">
           Website Settings
         </h1>
-        <p className="text-gray-600">
+        <p className="text-black">
           Manage website logo, hero background, and contact information.
         </p>
       </div>
@@ -292,13 +292,13 @@ export default function WebsiteSettingsPage() {
                       className="max-w-full max-h-full object-contain"
                     />
                   ) : (
-                    <div className="text-gray-400 text-sm text-center">
+                    <div className="text-black text-sm text-center">
                       No logo
                     </div>
                   )}
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-black mb-1">
                     Upload New Logo
                   </label>
                   <input
@@ -312,7 +312,7 @@ export default function WebsiteSettingsPage() {
                       file:bg-blue-50 file:text-blue-700
                       hover:file:bg-blue-100"
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-black">
                     Recommended size: 150x150px. Max file size: 2MB.
                   </p>
                 </div>
@@ -350,13 +350,13 @@ export default function WebsiteSettingsPage() {
                     }}
                   />
                 ) : (
-                  <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+                  <div className="flex items-center justify-center h-full text-black text-sm">
                     No hero background
                   </div>
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   Upload New Hero Background
                 </label>
                 <input
@@ -370,7 +370,7 @@ export default function WebsiteSettingsPage() {
                     file:bg-blue-50 file:text-blue-700
                     hover:file:bg-blue-100"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-black">
                   Recommended size: 1920x600px. Max file size: 5MB.
                 </p>
               </div>
@@ -386,7 +386,7 @@ export default function WebsiteSettingsPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   Email
                 </label>
                 <input
@@ -399,7 +399,7 @@ export default function WebsiteSettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   Phone Number
                 </label>
                 <input
@@ -412,7 +412,7 @@ export default function WebsiteSettingsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   WhatsApp Number
                 </label>
                 <input
@@ -422,13 +422,13 @@ export default function WebsiteSettingsPage() {
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-black">
                   Format: +628123456789 (include country code without spaces)
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   Address
                 </label>
                 <textarea
@@ -441,7 +441,7 @@ export default function WebsiteSettingsPage() {
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   Working Hours
                 </label>
                 <textarea
@@ -452,13 +452,13 @@ export default function WebsiteSettingsPage() {
                   className="mt-1 block w-full rounded-md text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                   placeholder="Example: Senin - Jumat: 08.00 - 17.00&#10;Sabtu: 09.00 - 15.00&#10;Minggu: Tutup"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-black">
                   Enter each day on a new line
                 </p>
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-black mb-1">
                   Map Location (Google Maps Embed URL)
                 </label>
                 <input
@@ -469,13 +469,13 @@ export default function WebsiteSettingsPage() {
                   className="mt-1 block w-full rounded-md text-black border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-3 py-2 border"
                   placeholder="https://www.google.com/maps/embed?pb=..."
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-1 text-xs text-black">
                   Masukkan URL embed Google Maps untuk menampilkan lokasi di
                   halaman Hubungi Kami
                 </p>
                 {settings?.mapLocation && (
                   <div className="mt-3 bg-gray-100 p-2 rounded-lg">
-                    <p className="text-sm font-medium text-gray-700 mb-2">
+                    <p className="text-sm font-medium text-black mb-2">
                       Preview:
                     </p>
                     <div className="h-40 rounded-md overflow-hidden">
